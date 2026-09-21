@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T-POT & SNACKS | Smart Sales Counter</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: #FFFBF5; color: #4E342E; }
+        header { background: #8D6E63; color: white; padding: 15px 0; text-align: center; }
+        .logo-main { font-size: 2.2rem; font-weight: 800; }
+        .logo-main .big-t { color: #FFD966; font-size: 2.8rem; }
+        .container { max-width: 1400px; margin: 25px auto; padding: 0 20px; }
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+        .card h2 { color: #8D6E63; margin-bottom: 20px; border-left: 5px solid #FFD966; padding-left: 15px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-weight: 600; margin-bottom: 8px; color: #5D4037; }
+        select, input { width: 100%; padding: 12px; border: 2px solid #E0CFC9; border-radius: 12px; font-size: 1rem; }
+        .item-details { background: #F9F3EA; border-radius: 15px; padding: 15px; margin: 15px 0; }
+        .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #E0CFC9; }
+        .detail-row:last-child { border-bottom: none; }
+        .stock-status { padding: 10px; border-radius: 10px; margin-top: 10px; text-align: center; font-weight: bold; }
+        .stock-good { background: #E8F5E9; color: #2E7D32; }
+        .stock-low { background: #FFF3E0; color: #E65100; }
+        .stock-empty { background: #FFEBEE; color: #C62828; }
+        .btn-sell { background: #2E7D32; color: white; width: 100%; padding: 14px; border: none; border-radius: 30px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-sell:hover:not(:disabled) { background: #1B5E20; }
+        .btn-sell:disabled { background: #BDBDBD; cursor: not-allowed; }
+        .btn-refresh { background: #A1887F; color: white; width: 100%; padding: 12px; border: none; border-radius: 30px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .sales-table { width: 100%; overflow-x: auto; max-height: 400px; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #EFE2D6; }
+        th { background: #F5EFE6; color: #8D6E63; position: sticky; top: 0; }
+        .success-msg { background: #E8F5E9; padding: 12px; border-radius: 12px; margin-top: 15px; color: #2E7D32; }
+        .error-msg { background: #FFEBEE; padding: 12px; border-radius: 12px; margin-top: 15px; color: #C62828; }
+        .total-revenue { background: linear-gradient(135deg, #FFD966, #FFB347); padding: 15px; border-radius: 15px; text-align: center; margin-top: 20px; }
+        .batch-badge { background: #8D6E63; color: white; padding: 4px 8px; border-radius: 20px; font-size: 0.7rem; display: inline-block; }
+        @media (max-width: 900px) { .dashboard { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo-main"><span class="big-t">T</span>-POT &amp; SNACKS <span style="font-size:1rem;">• SALES COUNTER</span></div>
+            <p>Sell by pieces - Auto tracks remaining stock | Never modifies original batches</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="dashboard">
+            <div class="card">
+                <h2><i class="fas fa-cash-register"></i> Record Sale</h2>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-boxes"></i> Select Batch</label>
+                    <select id="batchSelect">
+                        <option value="">-- Loading batches --</option>
+                    </select>
+                    <small>Shows only batches with remaining stock</small>
+                </div>
+
+                <div id="batchInfo"></div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-hashtag"></i> Quantity to Sell (pieces)</label>
+                    <input type="number" id="sellQty" min="1" value="1" step="1">
+                </div>
+
+                <div id="salePreview" style="margin: 15px 0; padding: 15px; background: #E8EAF6; border-radius: 15px;">
+                    <strong>💰 Sale Preview:</strong><br>
+                    Pieces: <span id="previewQty">0</span><br>
+                    Unit Price: ₦<span id="previewUnitPrice">0</span><br>
+                    <span style="font-size: 1.2rem;">Total: ₦<span id="previewTotal">0</span></span>
+                </div>
+
+                <button id="recordBtn" class="btn-sell">
+                    <i class="fas fa-check-circle"></i> CONFIRM SALE
+                </button>
+                <div id="message"></div>
+                <button id="refreshBtn" class="btn-refresh"><i class="fas fa-sync-alt"></i> Refresh</button>
+            </div>
+
+            <div class="card">
+                <h2><i class="fas fa-chart-line"></i> Today's Sales</h2>
+                <div class="sales-table">
+                    <table>
+                        <thead><tr><th>Time</th><th>Item</th><th>Batch</th><th>Qty</th><th>Total</th></tr></thead>
+                        <tbody id="salesBody"><tr><td colspan="5" style="text-align:center;">No sales today</td></tr></tbody>
+                    </table>
+                </div>
+                <div class="total-revenue">
+                    <h3>Today's Total</h3>
+                    <p id="dailyTotal" style="font-size: 2rem; font-weight: bold;">₦0</p>
+                </div>
+                <button id="backBtn" class="btn-refresh" style="background: #8D6E63;"><i class="fas fa-boxes"></i> Manage Batches</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDRKWldl8_NSAek4na-H-SQWjUBrxt26iI",
+            authDomain: "tpot.com.ng",
+            projectId: "t-pot-60c3d",
+            storageBucket: "t-pot-60c3d.firebasestorage.app",
+            messagingSenderId: "272048176539",
+            appId: "1:272048176539:web:d73d09a39171c8ef12753e"
+        };
+
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const batchesRef = db.collection("inventoryBatches");
+        const salesRef = db.collection("dailySales");
+
+        let currentBatch = null;
+        let allBatches = [];
+
+        async function getSoldTotal(batchId) {
+            const snapshot = await salesRef.where("batchId", "==", batchId).get();
+            let total = 0;
+            snapshot.forEach(doc => total += doc.data().quantitySold || 0);
+            return total;
+        }
+
+        async function loadBatches() {
+            const select = document.getElementById('batchSelect');
+            select.innerHTML = '<option value="">-- Loading --</option>';
+            
+            try {
+                const snapshot = await batchesRef.orderBy("createdAt", "desc").get();
+                if (snapshot.empty) {
+                    select.innerHTML = '<option value="">⚠️ No batches found</option>';
+                    return;
+                }
+
+                allBatches = [];
+                select.innerHTML = '<option value="">-- Select Batch --</option>';
+                
+                for (const doc of snapshot.docs) {
+                    const batch = { id: doc.id, ...doc.data() };
+                    const sold = await getSoldTotal(doc.id);
+                    const total = (batch.stockUnits || 0) * (batch.piecesPerUnit || 0);
+                    const remaining = total - sold;
+                    
+                    batch.remainingStock = remaining;
+                    batch.soldTotal = sold;
+                    
+                    allBatches.push(batch);
+                    
+                    if (remaining > 0) {
+                        const option = document.createElement('option');
+                        option.value = doc.id;
+                        option.textContent = `${batch.itemName} - ${remaining} pcs left (${batch.batchNumber}) - ₦${batch.sellingPrice}/pc`;
+                        select.appendChild(option);
+                    }
+                }
+                
+                if (select.children.length === 1) {
+                    select.innerHTML = '<option value="">⚠️ No active batches with stock</option>';
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                select.innerHTML = '<option value="">Error loading</option>';
+            }
+        }
+
+        document.getElementById('batchSelect').addEventListener('change', async (e) => {
+            const batchId = e.target.value;
+            if (!batchId) {
+                currentBatch = null;
+                document.getElementById('batchInfo').innerHTML = '';
+                updatePreview();
+                return;
+            }
+            
+            const batch = allBatches.find(b => b.id === batchId);
+            if (batch) {
+                const sold = await getSoldTotal(batchId);
+                const total = batch.stockUnits * batch.piecesPerUnit;
+                const remaining = total - sold;
+                batch.remainingStock = remaining;
+                currentBatch = batch;
+                
+                let statusClass = 'stock-good';
+                let statusText = '✓ In Stock';
+                if (remaining <= 0) {
+                    statusClass = 'stock-empty';
+                    statusText = '✗ OUT OF STOCK';
+                } else if (remaining < 10) {
+                    statusClass = 'stock-low';
+                    statusText = '⚠️ Low Stock';
+                }
+                
+                document.getElementById('batchInfo').innerHTML = `
+                    <div class="item-details">
+                        <div class="detail-row"><strong>📦 Item:</strong><span>${escapeHtml(batch.itemName)}</span></div>
+                        <div class="detail-row"><strong>🔢 Batch:</strong><span class="batch-badge">${escapeHtml(batch.batchNumber)}</span></div>
+                        <div class="detail-row"><strong>📅 Batch Date:</strong><span>${escapeHtml(batch.batchDateReadable || batch.batchDateOnly)}</span></div>
+                        <div class="detail-row"><strong>📊 Unit:</strong><span>1 ${batch.purchaseUnit} = ${batch.piecesPerUnit} pcs</span></div>
+                        <div class="detail-row"><strong>🎯 Original:</strong><span>${batch.stockUnits} ${batch.purchaseUnit}(s) = ${total.toLocaleString()} pcs</span></div>
+                        <div class="detail-row"><strong>📈 Sold:</strong><span>${sold.toLocaleString()} pcs</span></div>
+                        <div class="detail-row"><strong>🍳 Remaining:</strong><span style="color:${remaining<=0?'#C62828':'#2E7D32'};font-weight:bold;">${remaining.toLocaleString()} pcs</span></div>
+                        <div class="detail-row"><strong>💰 Price/pc:</strong><span>₦${batch.sellingPrice.toLocaleString()}</span></div>
+                    </div>
+                    <div class="stock-status ${statusClass}">${statusText}</div>
+                `;
+                updatePreview();
+                
+                const btn = document.getElementById('recordBtn');
+                btn.disabled = remaining <= 0;
+                btn.style.opacity = remaining <= 0 ? '0.6' : '1';
+            }
+        });
+
+        function updatePreview() {
+            if (!currentBatch) {
+                document.getElementById('previewQty').textContent = '0';
+                document.getElementById('previewUnitPrice').textContent = '0';
+                document.getElementById('previewTotal').textContent = '0';
+                return;
+            }
+            const qty = parseInt(document.getElementById('sellQty').value) || 0;
+            const total = qty * currentBatch.sellingPrice;
+            document.getElementById('previewQty').textContent = qty;
+            document.getElementById('previewUnitPrice').textContent = currentBatch.sellingPrice.toLocaleString();
+            document.getElementById('previewTotal').textContent = total.toLocaleString();
+        }
+
+        document.getElementById('sellQty').addEventListener('input', updatePreview);
+
+        async function recordSale() {
+            if (!currentBatch) {
+                showMessage('Select a batch first', 'error');
+                return;
+            }
+            
+            const qty = parseInt(document.getElementById('sellQty').value);
+            if (isNaN(qty) || qty <= 0) {
+                showMessage('Valid quantity required', 'error');
+                return;
+            }
+            
+            const sold = await getSoldTotal(currentBatch.id);
+            const total = currentBatch.stockUnits * currentBatch.piecesPerUnit;
+            const remaining = total - sold;
+            
+            if (qty > remaining) {
+                showMessage(`Only ${remaining} pieces available`, 'error');
+                return;
+            }
+            
+            const totalRevenue = qty * currentBatch.sellingPrice;
+            const today = new Date().toISOString().split('T')[0];
+            
+            if (!confirm(`Confirm Sale:\n\n${currentBatch.itemName}\nQty: ${qty} pcs\nTotal: ₦${totalRevenue.toLocaleString()}\nRemaining: ${remaining - qty} pcs`)) return;
+            
+            const btn = document.getElementById('recordBtn');
+            btn.disabled = true;
+            btn.textContent = "Processing...";
+            
+            try {
+                await salesRef.add({
+                    batchId: currentBatch.id,
+                    batchNumber: currentBatch.batchNumber,
+                    itemName: currentBatch.itemName,
+                    quantitySold: qty,
+                    unitPrice: currentBatch.sellingPrice,
+                    totalAmount: totalRevenue,
+                    saleDate: today,
+                    saleDateTime: new Date().toISOString(),
+                    timestamp: new Date().toISOString(),
+                    purchaseUnit: currentBatch.purchaseUnit,
+                    piecesPerUnit: currentBatch.piecesPerUnit
+                });
+                
+                await loadBatches();
+                await loadTodaySales();
+                
+                document.getElementById('sellQty').value = '1';
+                updatePreview();
+                
+                if (remaining - qty === 0) {
+                    showMessage(`✅ Sale recorded! Batch ${currentBatch.batchNumber} is now EMPTY!`, 'success');
+                    document.getElementById('batchSelect').value = '';
+                    document.getElementById('batchInfo').innerHTML = '';
+                    currentBatch = null;
+                } else {
+                    showMessage(`✅ Sold ${qty} pcs for ₦${totalRevenue.toLocaleString()}! ${remaining - qty} pcs left`, 'success');
+                }
+            } catch (error) {
+                showMessage(`Error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "CONFIRM SALE";
+            }
+        }
+
+        async function loadTodaySales() {
+            const today = new Date().toISOString().split('T')[0];
+            try {
+                const snapshot = await salesRef.where("saleDate", "==", today).orderBy("timestamp", "desc").get();
+                const body = document.getElementById('salesBody');
+                let total = 0;
+                
+                if (snapshot.empty) {
+                    body.innerHTML = '<tr><td colspan="5">No sales today</td></tr>';
+                    document.getElementById('dailyTotal').innerHTML = '₦0';
+                    return;
+                }
+                
+                body.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const sale = doc.data();
+                    total += sale.totalAmount;
+                    const time = sale.saleDateTime ? new Date(sale.saleDateTime).toLocaleTimeString() : 'N/A';
+                    body.innerHTML += `<tr>
+                        <td>${time}</td>
+                        <td>${escapeHtml(sale.itemName)}</td>
+                        <td><small>${escapeHtml(sale.batchNumber)}</small></td>
+                        <td>${sale.quantitySold} pcs</td>
+                        <td>₦${sale.totalAmount.toLocaleString()}</td>
+                    </tr>`;
+                });
+                document.getElementById('dailyTotal').innerHTML = `₦${total.toLocaleString()}`;
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
+
+        function showMessage(msg, type) {
+            const div = document.getElementById('message');
+            div.innerHTML = `<div class="${type === 'success' ? 'success-msg' : 'error-msg'}">${msg}</div>`;
+            setTimeout(() => { if (div.innerHTML.includes(msg)) div.innerHTML = ''; }, 5000);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+        }
+
+        document.getElementById('recordBtn').addEventListener('click', recordSale);
+        document.getElementById('refreshBtn').addEventListener('click', async () => { await loadBatches(); await loadTodaySales(); });
+        document.getElementById('backBtn').addEventListener('click', () => { window.location.href = 'InventoryManager.html'; });
+        
+        loadBatches();
+        loadTodaySales();
+    </script>
+</body>
+</html>

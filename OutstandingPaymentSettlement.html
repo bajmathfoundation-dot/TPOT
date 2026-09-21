@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T-POT & SNACKS | Settle Outstanding Payments</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+  body { background: #FFFBF5; color: #4E342E; padding-bottom: 40px; }
+  header { background: #8D6E63; color: white; padding: 20px 0; text-align: center; }
+  .logo { font-size: 1.8rem; font-weight: 800; }
+  .logo .big-t { color: #FFD966; font-size: 2.4rem; }
+  .container { max-width: 1100px; margin: 25px auto; padding: 0 20px; }
+  .card { background: white; border-radius: 18px; padding: 24px; box-shadow: 0 6px 18px rgba(0,0,0,0.08); margin-bottom: 20px; }
+  .card h2 { color: #8D6E63; margin-bottom: 18px; border-left: 5px solid #FFD966; padding-left: 12px; font-size: 1.15rem; }
+  label { display: block; font-weight: 600; margin: 12px 0 6px; color: #5D4037; font-size: 0.9rem; }
+  input, select { width: 100%; padding: 11px 14px; border: 2px solid #E0CFC9; border-radius: 10px; font-size: 1rem; outline: none; background: #FFFBF5; }
+  input:focus, select:focus { border-color: #8D6E63; }
+  .btn { padding: 12px 24px; border: none; border-radius: 30px; font-size: 0.95rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
+  .btn-primary { background: #1565C0; color: white; }
+  .btn-primary:hover { background: #0D47A1; }
+  .btn-success { background: #2E7D32; color: white; }
+  .btn-success:hover { background: #1B5E20; }
+  .btn-secondary { background: #E0CFC9; color: #4E342E; }
+  .btn-danger { background: #D32F2F; color: white; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+  .topbar a { color: #8D6E63; text-decoration: none; font-weight: 600; padding: 8px 16px; border-radius: 20px; background: #F5EFE6; }
+  .topbar a:hover { background: #E0CFC9; }
+  .customer-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: #F9F3EA; border-radius: 12px; margin-bottom: 10px; cursor: pointer; border: 2px solid transparent; transition: 0.15s; }
+  .customer-item:hover { border-color: #8D6E63; }
+  .customer-item.active { border-color: #2E7D32; background: #E8F5E9; }
+  .customer-item .name { font-weight: 700; font-size: 1.05rem; }
+  .customer-item .sub { font-size: 0.8rem; color: #7A6A5A; margin-top: 3px; }
+  .customer-item .amt { font-weight: 800; color: #C62828; font-size: 1.15rem; }
+  .customer-item .amt.paid { color: #2E7D32; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+  .badge.unpaid { background: #FFEBEE; color: #C62828; }
+  .badge.partial { background: #FFF3E0; color: #E65100; }
+  .badge.paid { background: #E8F5E9; color: #2E7D32; }
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 15px 0; }
+  .sum-card { background: #F5EFE6; padding: 14px; border-radius: 12px; text-align: center; }
+  .sum-card .num { font-size: 1.3rem; font-weight: 800; color: #4E342E; }
+  .sum-card .lbl { font-size: 0.72rem; color: #7A6A5A; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin-top: 10px; }
+  th { background: #F5EFE6; color: #5D4037; text-align: left; padding: 10px; font-weight: 700; }
+  td { padding: 10px; border-bottom: 1px solid #F0E6DC; }
+  .empty-msg { text-align: center; color: #7A6A5A; padding: 30px; font-style: italic; }
+  .msg { padding: 14px 18px; border-radius: 12px; margin-top: 15px; font-weight: 600; }
+  .msg.success { background: #E8F5E9; color: #2E7D32; border-left: 5px solid #2E7D32; }
+  .msg.error { background: #FFEBEE; color: #C62828; border-left: 5px solid #D32F2F; }
+  .msg.info { background: #E3F2FD; color: #1565C0; border-left: 5px solid #1565C0; }
+  .pay-row { display: grid; grid-template-columns: 2fr 1fr auto; gap: 10px; align-items: end; margin-top: 12px; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
+  @media (max-width: 700px) {
+    .pay-row { grid-template-columns: 1fr; }
+    .pay-row .btn { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <div class="logo"><span class="big-t">T</span>-POT & SNACKS <span style="font-size:1rem;">• SETTLE PAYMENTS</span></div>
+    <p>Record full or partial payment of outstanding balances</p>
+  </div>
+</header>
+
+<div class="container">
+  <div class="topbar">
+    <a href="OutstandingBalanceEntry.html"><i class="fas fa-plus-circle"></i> Record New Outstanding</a>
+    <a href="ProfitLossDashboard.html"><i class="fas fa-chart-line"></i> Dashboard</a>
+  </div>
+
+  <!-- Customer list -->
+  <div class="card">
+    <h2><i class="fas fa-users"></i> Customers With Outstanding Balances</h2>
+    <input type="text" id="searchBox" placeholder="🔍 Search customer name..." style="margin-bottom:12px;">
+    <div id="customerList"><div class="empty-msg">Loading...</div></div>
+  </div>
+
+  <!-- Selected customer detail -->
+  <div class="card" id="detailCard" style="display:none;">
+    <h2><i class="fas fa-file-invoice-dollar"></i> <span id="detailName">—</span></h2>
+
+    <div class="summary-grid">
+      <div class="sum-card"><div class="num" id="sumTotal">₦0</div><div class="lbl">Total Debt</div></div>
+      <div class="sum-card"><div class="num" id="sumPaid">₦0</div><div class="lbl">Total Paid</div></div>
+      <div class="sum-card"><div class="num" id="sumBalance" style="color:#C62828;">₦0</div><div class="lbl">Balance Due</div></div>
+      <div class="sum-card"><div class="num" id="sumDate" style="font-size:0.95rem;">—</div><div class="lbl">Debt Date</div></div>
+    </div>
+
+    <h2 style="margin-top:20px;"><i class="fas fa-shopping-basket"></i> Items Owed</h2>
+    <table>
+      <thead><tr><th>Item</th><th>Unit Price</th><th>Qty</th><th>Amount</th></tr></thead>
+      <tbody id="itemsBody"></tbody>
+    </table>
+
+    <h2 style="margin-top:24px;"><i class="fas fa-hand-holding-usd"></i> Record Payment</h2>
+    <div class="pay-row">
+      <div>
+        <label>Amount Paying (₦)</label>
+        <input type="number" id="payAmount" min="0" step="0.01" placeholder="0">
+      </div>
+      <div>
+        <label>Quick Fill</label>
+        <select id="quickFill">
+          <option value="">— Choose —</option>
+          <option value="half">Half of balance</option>
+          <option value="full">Full balance</option>
+        </select>
+      </div>
+      <button class="btn btn-success" id="payBtn"><i class="fas fa-check"></i> Save Payment</button>
+    </div>
+
+    <div id="payMsg"></div>
+
+    <h2 style="margin-top:24px;"><i class="fas fa-history"></i> Payment History</h2>
+    <table>
+      <thead><tr><th>Date Paid</th><th>Amount</th><th>Balance After</th></tr></thead>
+      <tbody id="historyBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDRKWldl8_NSAek4na-H-SQWjUBrxt26iI",
+  authDomain: "tpot.com.ng",
+  projectId: "t-pot-60c3d",
+  storageBucket: "t-pot-60c3d.firebasestorage.app",
+  messagingSenderId: "272048176539",
+  appId: "1:272048176539:web:d73d09a39171c8ef12753e"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+let allRecords = [];      // all outstanding docs
+let grouped = {};         // customerName -> [records]
+let selectedCustomer = null;
+
+function fmt(n) { return '₦' + (Number(n) || 0).toLocaleString(); }
+
+// ---------- Load records ----------
+async function loadRecords() {
+  const listEl = document.getElementById('customerList');
+  listEl.innerHTML = '<div class="empty-msg">Loading...</div>';
+  try {
+    const snap = await db.collection('outstandingbalance').orderBy('debtDateTime', 'desc').get();
+    allRecords = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // Group by customer name
+    grouped = {};
+    allRecords.forEach(r => {
+      const name = r.customerName || 'Unknown';
+      if (!grouped[name]) grouped[name] = [];
+      grouped[name].push(r);
+    });
+
+    // Sort customers by total balance desc
+    renderCustomerList();
+  } catch (err) {
+    listEl.innerHTML = `<div class="msg error">Load failed: ${err.message}</div>`;
+  }
+}
+
+function renderCustomerList(filter = '') {
+  const listEl = document.getElementById('customerList');
+  const f = filter.trim().toLowerCase();
+
+  const rows = Object.entries(grouped)
+    .map(([name, recs]) => {
+      const total = recs.reduce((s, r) => s + (Number(r.totalAmount) || 0), 0);
+      const paid  = recs.reduce((s, r) => s + (Number(r.amountPaid) || 0), 0);
+      const balance = total - paid;
+      return { name, recs, total, paid, balance };
+    })
+    .filter(c => !f || c.name.toLowerCase().includes(f))
+    .sort((a, b) => b.balance - a.balance);
+
+  if (!rows.length) {
+    listEl.innerHTML = '<div class="empty-msg">No outstanding records found.</div>';
+    return;
+  }
+
+  listEl.innerHTML = rows.map(c => {
+    let badgeCls = 'unpaid', badgeTxt = 'Unpaid';
+    if (c.balance <= 0) { badgeCls = 'paid'; badgeTxt = 'Paid'; }
+    else if (c.paid > 0) { badgeCls = 'partial'; badgeTxt = 'Partial'; }
+
+    return `
+      <div class="customer-item" data-name="${c.name.replace(/"/g,'&quot;')}">
+        <div>
+          <div class="name">${c.name} <span class="badge ${badgeCls}">${badgeTxt}</span></div>
+          <div class="sub">${c.recs.length} debt record(s) • Paid ${fmt(c.paid)} of ${fmt(c.total)}</div>
+        </div>
+        <div class="amt ${c.balance <= 0 ? 'paid' : ''}">${fmt(c.balance)}</div>
+      </div>
+    `;
+  }).join('');
+
+  listEl.querySelectorAll('.customer-item').forEach(el => {
+    el.addEventListener('click', () => selectCustomer(el.dataset.name));
+  });
+}
+
+// ---------- Select a customer ----------
+function selectCustomer(name) {
+  selectedCustomer = name;
+  document.querySelectorAll('.customer-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.name === name);
+  });
+
+  const recs = grouped[name] || [];
+  const total = recs.reduce((s, r) => s + (Number(r.totalAmount) || 0), 0);
+  const paid  = recs.reduce((s, r) => s + (Number(r.amountPaid) || 0), 0);
+  const balance = total - paid;
+
+  // Aggregate items across all this customer's records
+  const itemMap = new Map();
+  recs.forEach(r => {
+    (r.items || []).forEach(it => {
+      const key = it.itemName;
+      if (!itemMap.has(key)) itemMap.set(key, { name: key, price: it.unitPrice, qty: 0, amount: 0 });
+      const e = itemMap.get(key);
+      e.qty += Number(it.quantity) || 0;
+      e.amount += Number(it.amount) || 0;
+    });
+  });
+
+  // Earliest debt date (original date preserved)
+  const dates = recs.map(r => r.debtDate).filter(Boolean).sort();
+  const originalDate = dates[0] || '—';
+
+  document.getElementById('detailCard').style.display = 'block';
+  document.getElementById('detailName').textContent = name + "'s Outstanding";
+  document.getElementById('sumTotal').textContent = fmt(total);
+  document.getElementById('sumPaid').textContent = fmt(paid);
+  document.getElementById('sumBalance').textContent = fmt(balance);
+  document.getElementById('sumDate').textContent = originalDate;
+
+  // Items table
+  const itemsBody = document.getElementById('itemsBody');
+  itemsBody.innerHTML = itemMap.size
+    ? [...itemMap.values()].map(i => `
+        <tr>
+          <td>${i.name}</td>
+          <td>${fmt(i.price)}</td>
+          <td>${i.qty}</td>
+          <td><strong>${fmt(i.amount)}</strong></td>
+        </tr>`).join('')
+    : '<tr><td colspan="4" class="empty-msg">No items</td></tr>';
+
+  // Payment history (from all records of this customer)
+  const history = [];
+  recs.forEach(r => (r.paymentHistory || []).forEach(p => history.push(p)));
+  history.sort((a, b) => (b.paidDateTime?._seconds || 0) - (a.paidDateTime?._seconds || 0));
+  const histBody = document.getElementById('historyBody');
+  histBody.innerHTML = history.length
+    ? history.map(p => `
+        <tr>
+          <td>${p.paidDate || '—'}</td>
+          <td><strong>${fmt(p.amount)}</strong></td>
+          <td>${fmt(p.balanceAfter)}</td>
+        </tr>`).join('')
+    : '<tr><td colspan="3" class="empty-msg">No payments yet</td></tr>';
+
+  // Reset payment field
+  document.getElementById('payAmount').value = '';
+  document.getElementById('quickFill').value = '';
+  document.getElementById('payMsg').innerHTML = '';
+}
+
+// ---------- Quick fill ----------
+document.getElementById('quickFill').addEventListener('change', (e) => {
+  if (!selectedCustomer) return;
+  const recs = grouped[selectedCustomer] || [];
+  const total = recs.reduce((s, r) => s + (Number(r.totalAmount) || 0), 0);
+  const paid  = recs.reduce((s, r) => s + (Number(r.amountPaid) || 0), 0);
+  const balance = total - paid;
+
+  if (e.target.value === 'half') document.getElementById('payAmount').value = (balance / 2).toFixed(2);
+  if (e.target.value === 'full') document.getElementById('payAmount').value = balance.toFixed(2);
+});
+
+// ---------- Save payment ----------
+async function savePayment() {
+  const payMsg = document.getElementById('payMsg');
+  payMsg.innerHTML = '';
+
+  if (!selectedCustomer) return;
+  const amount = Number(document.getElementById('payAmount').value);
+
+  if (!amount || amount <= 0) {
+    payMsg.innerHTML = '<div class="msg error">Please enter a valid payment amount.</div>';
+    return;
+  }
+
+  const recs = grouped[selectedCustomer] || [];
+  const total = recs.reduce((s, r) => s + (Number(r.totalAmount) || 0), 0);
+  const paid  = recs.reduce((s, r) => s + (Number(r.amountPaid) || 0), 0);
+  const balance = total - paid;
+
+  if (amount > balance + 0.01) {
+    payMsg.innerHTML = `<div class="msg error">Payment exceeds balance due (${fmt(balance)}).</div>`;
+    return;
+  }
+
+  const now = new Date();
+  const dateStr = now.toISOString().split('T')[0];
+  const newPaid = paid + amount;
+  const newBalance = total - newPaid;
+
+  // Pick the most recent record to attach the payment to (so original dates stay intact)
+  const target = recs.sort((a, b) =>
+    (b.debtDateTime?._seconds || 0) - (a.debtDateTime?._seconds || 0)
+  )[0];
+  if (!target) return;
+
+  const paymentEntry = {
+    amount,
+    paidDate: dateStr,
+    paidDateTime: firebase.firestore.FieldValue.serverTimestamp(),
+    balanceAfter: newBalance
+  };
+
+  try {
+    document.getElementById('payBtn').disabled = true;
+
+    // Update the single record with new payment history and totals
+    // Original debtDate is NOT changed; new payment date is stored separately.
+    await db.collection('outstandingbalance').doc(target.id).update({
+      amountPaid: firebase.firestore.FieldValue.increment(amount),
+      balance: newBalance,
+      status: newBalance <= 0.01 ? 'paid' : 'partial',
+      paymentHistory: firebase.firestore.FieldValue.arrayUnion(paymentEntry),
+      lastPaymentDate: dateStr,
+      lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    payMsg.innerHTML = `<div class="msg success">✅ Payment of ${fmt(amount)} recorded. New balance: ${fmt(newBalance)}</div>`;
+
+    // Reload
+    await loadRecords();
+    selectCustomer(selectedCustomer);
+  } catch (err) {
+    payMsg.innerHTML = `<div class="msg error">Save failed: ${err.message}</div>`;
+  } finally {
+    document.getElementById('payBtn').disabled = false;
+  }
+}
+
+// ---------- Wire up ----------
+document.getElementById('payBtn').addEventListener('click', savePayment);
+document.getElementById('searchBox').addEventListener('input', (e) => renderCustomerList(e.target.value));
+
+loadRecords();
+</script>
+</body>
+</html>

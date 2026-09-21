@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T-POT & SNACKS | Staff Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body {
+            background: linear-gradient(rgba(139,69,19,0.95), rgba(139,69,19,0.95)),
+                        url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80');
+            background-size: cover;
+            background-position: center;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            padding: 20px;
+        }
+        .login-card {
+            background: rgba(255,255,255,0.97);
+            padding: 40px 35px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            color: #333;
+        }
+        .logo { text-align: center; margin-bottom: 25px; }
+        .logo-main { font-size: 3rem; font-weight: 900; color: #8b4513; }
+        .logo-main .big-t { color: #ffd700; font-size: 3.6rem; }
+        h2 { text-align: center; color: #8b4513; margin-bottom: 25px; font-size: 1.6rem; }
+
+        .input-group { margin-bottom: 18px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #8b4513; font-size: 0.9rem; }
+        input {
+            width: 100%;
+            padding: 13px 14px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        input:focus { border-color: #8b4513; outline: none; box-shadow: 0 0 0 3px rgba(139,69,19,0.2); }
+
+        .btn {
+            width: 100%;
+            background: #8b4513;
+            color: white;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn:hover:not(:disabled) { background: #a0522d; transform: translateY(-2px); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .btn-google {
+            background: white;
+            color: #333;
+            border: 2px solid #ddd;
+            margin-top: 12px;
+        }
+        .btn-google:hover:not(:disabled) { background: #f5f5f5; border-color: #bbb; }
+        .btn-google img { width: 20px; height: 20px; }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 20px 0;
+            color: #999;
+            font-size: 0.8rem;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e0e0e0;
+        }
+
+        .links { text-align: center; margin-top: 18px; font-size: 0.85rem; }
+        .links a { color: #8b4513; text-decoration: none; font-weight: 600; }
+        .links a:hover { text-decoration: underline; }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+            display: block;
+            color: #8b4513;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .back-link:hover { text-decoration: underline; }
+
+        .error {
+            color: #d32f2f;
+            text-align: center;
+            margin-top: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .success {
+            color: #2e7d32;
+            text-align: center;
+            margin-top: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .spinner {
+            display: inline-block;
+            width: 16px; height: 16px;
+            border: 2px solid #fff; border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Password reset panel */
+        #resetPanel { display: none; }
+        #resetPanel.active { display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <div class="logo">
+            <div class="logo-main"><span class="big-t">T</span>-POT <span style="font-size:1.2rem; color:#ffd700;">&amp; SNACKS</span></div>
+        </div>
+        <h2 id="cardTitle">Staff Login</h2>
+
+        <form id="loginForm">
+            <div class="input-group">
+                <label>Email</label>
+                <input type="email" id="email" placeholder="you@tpot.com.ng" required autocomplete="email">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="Enter password" required autocomplete="current-password">
+            </div>
+
+            <button type="submit" class="btn" id="loginBtn">
+                <span id="loginBtnText">LOGIN</span>
+            </button>
+
+            <div class="divider">OR</div>
+
+            <button type="button" class="btn btn-google" id="googleBtn">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="">
+                Continue with Google
+            </button>
+        </form>
+
+        <!-- Forgot password -->
+        <form id="resetForm" style="display:none;">
+            <div class="input-group">
+                <label>Email</label>
+                <input type="email" id="resetEmail" placeholder="you@tpot.com.ng" required>
+            </div>
+            <button type="submit" class="btn" id="resetBtn">
+                <span id="resetBtnText">SEND RESET LINK</span>
+            </button>
+            <button type="button" class="btn btn-google" id="backToLoginBtn" style="margin-top:12px;">
+                Back to login
+            </button>
+        </form>
+
+        <p id="errorMsg" class="error"></p>
+        <p id="successMsg" class="success"></p>
+
+        <div class="links">
+            <a href="#" id="forgotLink">Forgot password?</a>
+        </div>
+
+        <a href="index.html" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Main Website
+        </a>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDRKWldl8_NSAek4na-H-SQWjUBrxt26iI",
+            authDomain: "tpot.com.ng",
+            projectId: "t-pot-60c3d",
+            storageBucket: "t-pot-60c3d.firebasestorage.app",
+            messagingSenderId: "272048176539",
+            appId: "1:272048176539:web:d73d09a39171c8ef12753e"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // ============================================================
+        //  STAFF → DASHBOARD MAP
+        //  Keyed by email. If the signed-in email isn't here, the user
+        //  is not a staff member and will be blocked.
+        // ============================================================
+        const STAFF_REDIRECTS = {
+            "khalid@tpot.com.ng":    "khalid.html",
+            "mahir@tpot.com.ng":     "mahir.html",
+            "muhammad@tpot.com.ng":  "muhammad.html",
+            "jalo@tpot.com.ng":      "T-POTAdmin.html"
+        };
+
+        // ============================================================
+        //  OPTIONAL: you can also allow any email ending with @tpot.com.ng
+        //  Set to true to allow all company emails (with a default page).
+        // ============================================================
+        const ALLOW_ANY_TPOT_EMAIL = false;
+        const DEFAULT_PAGE_FOR_UNLISTED = "T-POTAdmin.html";
+
+        // If already signed in, redirect immediately
+        auth.onAuthStateChanged(user => {
+            if (user && isAuthorized(user.email)) {
+                redirectUser(user.email);
+            }
+        });
+
+        function isAuthorized(email) {
+            if (!email) return false;
+            if (STAFF_REDIRECTS[email.toLowerCase()]) return true;
+            if (ALLOW_ANY_TPOT_EMAIL && email.toLowerCase().endsWith("@tpot.com.ng")) return true;
+            return false;
+        }
+
+        function redirectUser(email) {
+            const e = email.toLowerCase();
+            const target = STAFF_REDIRECTS[e] || DEFAULT_PAGE_FOR_UNLISTED;
+            window.location.href = target;
+        }
+
+        // ============================================================
+        //  LOGIN (email + password)
+        // ============================================================
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginBtnText = document.getElementById('loginBtnText');
+        const errorMsg = document.getElementById('errorMsg');
+        const successMsg = document.getElementById('successMsg');
+
+        function clearMessages() {
+            errorMsg.textContent = '';
+            successMsg.textContent = '';
+        }
+
+        function friendlyError(err) {
+            const code = err.code || '';
+            const map = {
+                'auth/user-not-found':      'No account found with that email.',
+                'auth/wrong-password':      'Incorrect password.',
+                'auth/invalid-email':       'That email address is not valid.',
+                'auth/too-many-requests':   'Too many attempts. Try again in a few minutes.',
+                'auth/network-request-failed': 'Network error. Check your connection.',
+                'auth/invalid-credential':  'Email or password is incorrect.'
+            };
+            return map[code] || err.message || 'Login failed.';
+        }
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearMessages();
+
+            const email = document.getElementById('email').value.trim().toLowerCase();
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                errorMsg.textContent = 'Enter your email and password.';
+                return;
+            }
+
+            loginBtn.disabled = true;
+            loginBtnText.innerHTML = '<span class="spinner"></span> Signing in...';
+
+            try {
+                const cred = await auth.signInWithEmailAndPassword(email, password);
+
+                if (!isAuthorized(cred.user.email)) {
+                    await auth.signOut();
+                    errorMsg.textContent = 'This account is not authorized to access the staff area.';
+                    return;
+                }
+
+                successMsg.textContent = 'Success! Redirecting...';
+                redirectUser(cred.user.email);
+
+            } catch (err) {
+                console.error(err);
+                errorMsg.textContent = '❌ ' + friendlyError(err);
+            } finally {
+                loginBtn.disabled = false;
+                loginBtnText.textContent = 'LOGIN';
+            }
+        });
+
+        // ============================================================
+        //  GOOGLE SIGN-IN
+        // ============================================================
+        document.getElementById('googleBtn').addEventListener('click', async () => {
+            clearMessages();
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.setCustomParameters({ prompt: 'select_account' });
+
+            try {
+                const result = await auth.signInWithPopup(provider);
+
+                if (!isAuthorized(result.user.email)) {
+                    await auth.signOut();
+                    errorMsg.textContent = 'This Google account is not authorized.';
+                    return;
+                }
+
+                successMsg.textContent = 'Success! Redirecting...';
+                redirectUser(result.user.email);
+
+            } catch (err) {
+                console.error(err);
+                if (err.code !== 'auth/popup-closed-by-user') {
+                    errorMsg.textContent = '❌ ' + friendlyError(err);
+                }
+            }
+        });
+
+        // ============================================================
+        //  FORGOT PASSWORD
+        // ============================================================
+        const resetForm = document.getElementById('resetForm');
+        const resetBtn = document.getElementById('resetBtn');
+        const resetBtnText = document.getElementById('resetBtnText');
+        const forgotLink = document.getElementById('forgotLink');
+        const backToLoginBtn = document.getElementById('backToLoginBtn');
+        const cardTitle = document.getElementById('cardTitle');
+
+        forgotLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            clearMessages();
+            loginForm.style.display = 'none';
+            resetForm.style.display = 'block';
+            cardTitle.textContent = 'Reset Password';
+        });
+
+        backToLoginBtn.addEventListener('click', () => {
+            clearMessages();
+            resetForm.style.display = 'none';
+            loginForm.style.display = 'block';
+            cardTitle.textContent = 'Staff Login';
+        });
+
+        resetForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearMessages();
+
+            const email = document.getElementById('resetEmail').value.trim().toLowerCase();
+            if (!email) return;
+
+            resetBtn.disabled = true;
+            resetBtnText.innerHTML = '<span class="spinner" style="border-color:#fff;border-top-color:transparent;"></span> Sending...';
+
+            try {
+                await auth.sendPasswordResetEmail(email);
+                successMsg.textContent = '✅ Reset link sent. Check your inbox (and spam).';
+                setTimeout(() => {
+                    resetForm.style.display = 'none';
+                    loginForm.style.display = 'block';
+                    cardTitle.textContent = 'Staff Login';
+                    clearMessages();
+                }, 4000);
+            } catch (err) {
+                console.error(err);
+                errorMsg.textContent = '❌ ' + friendlyError(err);
+            } finally {
+                resetBtn.disabled = false;
+                resetBtnText.textContent = 'SEND RESET LINK';
+            }
+        });
+
+        // Optional: sign out any existing session when landing on this page
+        // (uncomment if you want to force re-login every time)
+        // auth.signOut();
+    </script>
+</body>
+</html>

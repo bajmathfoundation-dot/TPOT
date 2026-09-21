@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>TPOT Shop | Complete Profit & Loss Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            background: #f0ebe3;
+            color: #2c2418;
+        }
+
+        .header {
+            background: #1a3a1c;
+            color: #fef7e0;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .logo h1 {
+            font-size: 1.6rem;
+            font-weight: 600;
+        }
+
+        .logo span {
+            color: #f4b942;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            color: #fef7e0;
+            text-decoration: none;
+            font-weight: 500;
+            transition: 0.2s;
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Date Range Selector */
+        .date-range-bar {
+            background: white;
+            border-radius: 20px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .date-inputs {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .date-inputs input {
+            padding: 10px 15px;
+            border: 1.5px solid #e2dcd2;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .quick-filters {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .quick-btn {
+            background: #f0ebe3;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        .quick-btn:hover {
+            background: #b8652e;
+            color: white;
+        }
+
+        .quick-btn.active {
+            background: #b8652e;
+            color: white;
+        }
+
+        .refresh-btn {
+            background: #b8652e;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background: white;
+            border-radius: 24px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border-left: 5px solid;
+            transition: transform 0.2s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .kpi-card.revenue { border-left-color: #2e7d32; }
+        .kpi-card.cost { border-left-color: #c62828; }
+        .kpi-card.profit { border-left-color: #ff8f00; }
+        .kpi-card.margin { border-left-color: #1565c0; }
+        .kpi-card.orders { border-left-color: #6a1b9a; }
+        .kpi-card.items { border-left-color: #00838f; }
+
+        .kpi-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #7a6a5a;
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #2c2418;
+        }
+
+        .kpi-sub {
+            font-size: 0.7rem;
+            color: #7a6a5a;
+            margin-top: 0.5rem;
+        }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 24px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .chart-card h3 {
+            color: #b8652e;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        canvas {
+            max-height: 300px;
+            width: 100%;
+        }
+
+        /* Items Table - Per Item Performance */
+        .items-section {
+            background: white;
+            border-radius: 24px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+        }
+
+        .items-section h3 {
+            color: #b8652e;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .items-table-wrapper {
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .items-table th {
+            text-align: left;
+            padding: 0.75rem;
+            background: #f5f0ea;
+            color: #5a4a3a;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        .items-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #f0e6dc;
+        }
+
+        .items-table tr:hover {
+            background: #fefaf5;
+        }
+
+        .profit-positive {
+            color: #2e7d32;
+            font-weight: 600;
+        }
+
+        .profit-negative {
+            color: #c62828;
+            font-weight: 600;
+        }
+
+        /* Time Progression Tables */
+        .time-section {
+            background: white;
+            border-radius: 24px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+        }
+
+        .time-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #f0e6dc;
+            padding-bottom: 0.5rem;
+        }
+
+        .time-tab {
+            background: none;
+            border: none;
+            padding: 8px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            border-radius: 30px;
+            transition: 0.2s;
+        }
+
+        .time-tab:hover {
+            background: #f0ebe3;
+        }
+
+        .time-tab.active {
+            background: #b8652e;
+            color: white;
+        }
+
+        .time-table-wrapper {
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .time-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .time-table th {
+            text-align: left;
+            padding: 0.75rem;
+            background: #f5f0ea;
+            color: #5a4a3a;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        .time-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #f0e6dc;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .export-btn {
+            background: #2c3e2f;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        footer {
+            background: #e8dfd4;
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            color: #6b5a4a;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .charts-grid { grid-template-columns: 1fr; }
+            .kpi-value { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <h1><span>🍜</span> TPOT Shop · Complete P&L Dashboard</h1>
+        </div>
+        <div class="nav-links">
+            <a href="RegisterMenu.html"><i class="fas fa-utensils"></i> Menu</a>
+            <a href="InventoryManager.html"><i class="fas fa-boxes"></i> Batches</a>
+            <a href="SalesCounter.html"><i class="fas fa-cash-register"></i> Sales</a>
+            <a href="ViewRecords.html"><i class="fas fa-database"></i> Records</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Date Range Selector -->
+        <div class="date-range-bar">
+            <div class="date-inputs">
+                <input type="date" id="startDate">
+                <input type="date" id="endDate">
+            </div>
+            <div class="quick-filters">
+                <button class="quick-btn" data-range="today">Today</button>
+                <button class="quick-btn" data-range="week">This Week</button>
+                <button class="quick-btn" data-range="month">This Month</button>
+                <button class="quick-btn" data-range="quarter">This Quarter</button>
+                <button class="quick-btn" data-range="year">This Year</button>
+                <button class="quick-btn active" data-range="all">All Time</button>
+            </div>
+            <button id="refreshBtn" class="refresh-btn"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-grid" id="kpiGrid">
+            <div class="kpi-card revenue">
+                <div class="kpi-title"><i class="fas fa-chart-line"></i> Total Revenue</div>
+                <div class="kpi-value" id="totalRevenue">₦0</div>
+                <div class="kpi-sub">All sales</div>
+            </div>
+            <div class="kpi-card cost">
+                <div class="kpi-title"><i class="fas fa-coins"></i> Total Cost</div>
+                <div class="kpi-value" id="totalCost">₦0</div>
+                <div class="kpi-sub">Ingredients + supplies</div>
+            </div>
+            <div class="kpi-card profit">
+                <div class="kpi-title"><i class="fas fa-chart-simple"></i> Net Profit</div>
+                <div class="kpi-value" id="netProfit">₦0</div>
+                <div class="kpi-sub" id="profitTrend"></div>
+            </div>
+            <div class="kpi-card margin">
+                <div class="kpi-title"><i class="fas fa-percent"></i> Profit Margin</div>
+                <div class="kpi-value" id="profitMargin">0%</div>
+                <div class="kpi-sub">Net profit / Revenue</div>
+            </div>
+            <div class="kpi-card orders">
+                <div class="kpi-title"><i class="fas fa-shopping-bag"></i> Total Orders</div>
+                <div class="kpi-value" id="totalOrders">0</div>
+                <div class="kpi-sub">Completed orders</div>
+            </div>
+            <div class="kpi-card items">
+                <div class="kpi-title"><i class="fas fa-utensils"></i> Items Sold</div>
+                <div class="kpi-value" id="totalItemsSold">0</div>
+                <div class="kpi-sub">Total pieces sold</div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3><i class="fas fa-chart-line"></i> Revenue vs Cost Trend</h3>
+                <canvas id="revenueCostChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3><i class="fas fa-chart-pie"></i> Top Items by Revenue</h3>
+                <canvas id="topItemsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- PER ITEM PROFITABILITY TABLE -->
+        <div class="items-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 1rem;">
+                <h3><i class="fas fa-chart-simple"></i> 📊 Profitability by Menu Item</h3>
+                <button id="exportItemsBtn" class="export-btn"><i class="fas fa-download"></i> Export Items Data</button>
+            </div>
+            <div class="items-table-wrapper">
+                <table class="items-table" id="itemsTable">
+                    <thead>
+                        <tr>
+                            <th>Menu Item</th>
+                            <th>Category</th>
+                            <th>Quantity Sold</th>
+                            <th>Revenue (₦)</th>
+                            <th>Food Cost (₦)</th>
+                            <th>Profit (₦)</th>
+                            <th>Margin</th>
+                            <th>Trend</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemsBody">
+                        <tr><td colspan="8" style="text-align:center;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TIME PROGRESSION SECTION -->
+        <div class="time-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 1rem;">
+                <h3><i class="fas fa-calendar-week"></i> 📈 Performance Over Time</h3>
+                <div class="time-tabs">
+                    <button class="time-tab active" data-period="daily">Daily</button>
+                    <button class="time-tab" data-period="weekly">Weekly</button>
+                    <button class="time-tab" data-period="monthly">Monthly</button>
+                    <button class="time-tab" data-period="quarterly">Quarterly</button>
+                    <button class="time-tab" data-period="yearly">Yearly</button>
+                </div>
+            </div>
+            <div class="time-table-wrapper">
+                <table class="time-table" id="timeTable">
+                    <thead>
+                        <tr>
+                            <th>Period</th>
+                            <th>Orders</th>
+                            <th>Items Sold</th>
+                            <th>Revenue (₦)</th>
+                            <th>Cost (₦)</th>
+                            <th>Profit (₦)</th>
+                            <th>Margin</th>
+                            <th>Top Item</th>
+                        </tr>
+                    </thead>
+                    <tbody id="timeBody">
+                        <tr><td colspan="8" style="text-align:center;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- BATCH PERFORMANCE SECTION -->
+        <div class="items-section">
+            <h3><i class="fas fa-boxes"></i> 📦 Batch Performance (Inventory Batches)</h3>
+            <div class="items-table-wrapper">
+                <table class="items-table" id="batchesTable">
+                    <thead>
+                        <tr>
+                            <th>Batch #</th>
+                            <th>Item</th>
+                            <th>Batch Date</th>
+                            <th>Original Qty</th>
+                            <th>Sold</th>
+                            <th>Remaining</th>
+                            <th>Purchase Cost</th>
+                            <th>Revenue Generated</th>
+                            <th>Profit</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="batchesBody">
+                        <tr><td colspan="10" style="text-align:center;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>🍜 TPOT Shop · Complete Profit & Loss Dashboard · Real-time data from batches, sales, and inventory</p>
+    </footer>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDRKWldl8_NSAek4na-H-SQWjUBrxt26iI",
+            authDomain: "tpot.com.ng",
+            projectId: "t-pot-60c3d",
+            storageBucket: "t-pot-60c3d.firebasestorage.app",
+            messagingSenderId: "272048176539",
+            appId: "1:272048176539:web:d73d09a39171c8ef12753e"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Collections
+        const salesRef = db.collection("dailySales");
+        const batchesRef = db.collection("inventoryBatches");
+        const menuItemsRef = db.collection("menuItems");
+
+        let allSales = [];
+        let allBatches = [];
+        let menuItems = [];
+        let currentPeriod = 'daily';
+        let currentStartDate = null;
+        let currentEndDate = null;
+        let currentRange = 'all';
+
+        let revenueCostChart = null;
+        let topItemsChart = null;
+
+        // Cost parameters (configurable)
+        const FOOD_COST_PERCENT = 40;
+        const OPERATIONAL_COST_PERCENT = 5;
+
+        function formatCurrency(amount) {
+            return `₦${amount.toLocaleString()}`;
+        }
+
+        function calculateCost(revenue) {
+            return revenue * (FOOD_COST_PERCENT + OPERATIONAL_COST_PERCENT) / 100;
+        }
+
+        function setDateRange(range) {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            let start = new Date(0);
+            let end = new Date();
+            end.setHours(23, 59, 59, 999);
+            
+            switch(range) {
+                case 'today':
+                    start = today;
+                    break;
+                case 'week':
+                    start = new Date(today);
+                    start.setDate(today.getDate() - 7);
+                    break;
+                case 'month':
+                    start = new Date(today.getFullYear(), today.getMonth(), 1);
+                    break;
+                case 'quarter':
+                    const quarterStartMonth = Math.floor(today.getMonth() / 3) * 3;
+                    start = new Date(today.getFullYear(), quarterStartMonth, 1);
+                    break;
+                case 'year':
+                    start = new Date(today.getFullYear(), 0, 1);
+                    break;
+                case 'all':
+                    start = new Date(0);
+                    break;
+            }
+            return { start, end };
+        }
+
+        function filterSalesByDate(sales, start, end) {
+            return sales.filter(sale => {
+                if (!sale.saleDate) return false;
+                const saleDate = new Date(sale.saleDate);
+                return saleDate >= start && saleDate <= end;
+            });
+        }
+
+        // Calculate per-item metrics
+        function calculateItemMetrics(sales, start, end) {
+            const filteredSales = filterSalesByDate(sales, start, end);
+            const itemMap = new Map();
+            
+            filteredSales.forEach(sale => {
+                const itemName = sale.itemName || 'Unknown';
+                if (!itemMap.has(itemName)) {
+                    itemMap.set(itemName, {
+                        name: itemName,
+                        category: sale.category || 'General',
+                        quantity: 0,
+                        revenue: 0
+                    });
+                }
+                const item = itemMap.get(itemName);
+                item.quantity += sale.quantitySold || 0;
+                item.revenue += sale.totalAmount || 0;
+            });
+            
+            const itemsArray = Array.from(itemMap.values()).map(item => {
+                const cost = calculateCost(item.revenue);
+                const profit = item.revenue - cost;
+                const margin = item.revenue > 0 ? (profit / item.revenue * 100) : 0;
+                return { ...item, cost, profit, margin };
+            }).sort((a, b) => b.revenue - a.revenue);
+            
+            return itemsArray;
+        }
+
+        // Calculate time-based progression
+        function calculateTimeProgression(sales, period, start, end) {
+            const filteredSales = filterSalesByDate(sales, start, end);
+            const periodMap = new Map();
+            
+            filteredSales.forEach(sale => {
+                if (!sale.saleDate) return;
+                const date = new Date(sale.saleDate);
+                let periodKey;
+                
+                switch(period) {
+                    case 'daily':
+                        periodKey = date.toISOString().split('T')[0];
+                        break;
+                    case 'weekly':
+                        const weekStart = new Date(date);
+                        weekStart.setDate(date.getDate() - date.getDay());
+                        periodKey = weekStart.toISOString().split('T')[0];
+                        break;
+                    case 'monthly':
+                        periodKey = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
+                        break;
+                    case 'quarterly':
+                        const quarter = Math.floor(date.getMonth() / 3) + 1;
+                        periodKey = `${date.getFullYear()}-Q${quarter}`;
+                        break;
+                    case 'yearly':
+                        periodKey = `${date.getFullYear()}`;
+                        break;
+                    default:
+                        periodKey = date.toISOString().split('T')[0];
+                }
+                
+                if (!periodMap.has(periodKey)) {
+                    periodMap.set(periodKey, {
+                        period: periodKey,
+                        orders: 0,
+                        itemsSold: 0,
+                        revenue: 0,
+                        itemCount: new Map()
+                    });
+                }
+                const periodData = periodMap.get(periodKey);
+                periodData.orders++;
+                periodData.itemsSold += sale.quantitySold || 0;
+                periodData.revenue += sale.totalAmount || 0;
+                
+                const itemName = sale.itemName || 'Unknown';
+                periodData.itemCount.set(itemName, (periodData.itemCount.get(itemName) || 0) + (sale.quantitySold || 0));
+            });
+            
+            const sortedPeriods = Array.from(periodMap.entries())
+                .sort((a, b) => a[0].localeCompare(b[0]))
+                .map(([key, data]) => {
+                    const cost = calculateCost(data.revenue);
+                    const profit = data.revenue - cost;
+                    const margin = data.revenue > 0 ? (profit / data.revenue * 100) : 0;
+                    let topItem = '—';
+                    let maxQty = 0;
+                    for (let [item, qty] of data.itemCount) {
+                        if (qty > maxQty) {
+                            maxQty = qty;
+                            topItem = item;
+                        }
+                    }
+                    return {
+                        period: key,
+                        orders: data.orders,
+                        itemsSold: data.itemsSold,
+                        revenue: data.revenue,
+                        cost: cost,
+                        profit: profit,
+                        margin: margin,
+                        topItem: topItem.length > 20 ? topItem.substring(0, 20) + '...' : topItem
+                    };
+                });
+            
+            return sortedPeriods;
+        }
+
+        // Calculate batch performance
+        async function calculateBatchPerformance(batches, sales, start, end) {
+            const filteredSales = filterSalesByDate(sales, start, end);
+            const batchSalesMap = new Map();
+            
+            filteredSales.forEach(sale => {
+                const batchId = sale.batchId;
+                if (batchId) {
+                    batchSalesMap.set(batchId, (batchSalesMap.get(batchId) || 0) + (sale.quantitySold || 0));
+                }
+            });
+            
+            const batchPerformance = [];
+            for (const batch of batches) {
+                const sold = batchSalesMap.get(batch.id) || 0;
+                const originalPieces = (batch.batchQty || batch.stockUnits || 0) * (batch.piecesPerUnit || 1);
+                const remaining = originalPieces - sold;
+                const revenueGenerated = sold * (batch.sellingPrice || 0);
+                const purchaseCost = (batch.purchasePrice || 0) * (batch.batchQty || batch.stockUnits || 0);
+                const profit = revenueGenerated - purchaseCost;
+                
+                let status = 'ACTIVE';
+                if (remaining <= 0) status = 'EMPTY';
+                else if (remaining < 10) status = 'LOW';
+                
+                batchPerformance.push({
+                    id: batch.id,
+                    batchNumber: batch.batchNumber || batch.id.substring(0, 8),
+                    itemName: batch.itemName,
+                    batchDate: batch.batchDateReadable || batch.batchDateOnly || 'Unknown',
+                    originalQty: originalPieces,
+                    sold: sold,
+                    remaining: remaining,
+                    purchaseCost: purchaseCost,
+                    revenueGenerated: revenueGenerated,
+                    profit: profit,
+                    status: status
+                });
+            }
+            
+            return batchPerformance.sort((a, b) => b.profit - a.profit);
+        }
+
+        // Update KPIs
+        function updateKPIs(sales, start, end) {
+            const filteredSales = filterSalesByDate(sales, start, end);
+            const totalRevenue = filteredSales.reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+            const totalCost = calculateCost(totalRevenue);
+            const netProfit = totalRevenue - totalCost;
+            const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue * 100) : 0;
+            const totalOrders = filteredSales.length;
+            const totalItemsSold = filteredSales.reduce((sum, s) => sum + (s.quantitySold || 0), 0);
+            
+            document.getElementById('totalRevenue').innerHTML = formatCurrency(totalRevenue);
+            document.getElementById('totalCost').innerHTML = formatCurrency(totalCost);
+            document.getElementById('netProfit').innerHTML = formatCurrency(netProfit);
+            document.getElementById('profitMargin').innerHTML = `${profitMargin.toFixed(1)}%`;
+            document.getElementById('totalOrders').innerHTML = totalOrders.toLocaleString();
+            document.getElementById('totalItemsSold').innerHTML = totalItemsSold.toLocaleString();
+            
+            const trendSpan = document.getElementById('profitTrend');
+            if (netProfit >= 0) {
+                trendSpan.innerHTML = '<i class="fas fa-arrow-up" style="color:#2e7d32;"></i> Profitable period';
+                trendSpan.style.color = '#2e7d32';
+            } else {
+                trendSpan.innerHTML = '<i class="fas fa-arrow-down" style="color:#c62828;"></i> Loss period';
+                trendSpan.style.color = '#c62828';
+            }
+        }
+
+        // Update charts
+        function updateCharts(sales, start, end) {
+            const filteredSales = filterSalesByDate(sales, start, end);
+            
+            // Monthly data for revenue vs cost
+            const monthlyData = new Map();
+            filteredSales.forEach(sale => {
+                if (!sale.saleDate) return;
+                const date = new Date(sale.saleDate);
+                const monthKey = `${date.getFullYear()}-${date.getMonth()+1}`;
+                if (!monthlyData.has(monthKey)) {
+                    monthlyData.set(monthKey, { revenue: 0, cost: 0, date: date });
+                }
+                const revenue = sale.totalAmount || 0;
+                monthlyData.get(monthKey).revenue += revenue;
+                monthlyData.get(monthKey).cost += calculateCost(revenue);
+            });
+            
+            const sortedMonths = Array.from(monthlyData.entries()).sort((a, b) => a[1].date - b[1].date);
+            const labels = sortedMonths.map(([key]) => {
+                const [year, month] = key.split('-');
+                return new Date(year, month-1).toLocaleDateString('default', { month: 'short', year: 'numeric' });
+            });
+            const revenueData = sortedMonths.map(([, data]) => data.revenue);
+            const costData = sortedMonths.map(([, data]) => data.cost);
+            
+            if (revenueCostChart) revenueCostChart.destroy();
+            const ctx1 = document.getElementById('revenueCostChart').getContext('2d');
+            revenueCostChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Revenue', data: revenueData, borderColor: '#2e7d32', backgroundColor: 'rgba(46,125,50,0.1)', fill: true, tension: 0.3 },
+                        { label: 'Cost', data: costData, borderColor: '#c62828', backgroundColor: 'rgba(198,40,40,0.1)', fill: true, tension: 0.3 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ₦${ctx.raw.toLocaleString()}` } } } }
+            });
+            
+            // Top items pie chart
+            const itemMetrics = calculateItemMetrics(sales, start, end);
+            const top5 = itemMetrics.slice(0, 5);
+            const otherRevenue = itemMetrics.slice(5).reduce((sum, i) => sum + i.revenue, 0);
+            
+            if (topItemsChart) topItemsChart.destroy();
+            const ctx2 = document.getElementById('topItemsChart').getContext('2d');
+            topItemsChart = new Chart(ctx2, {
+                type: 'pie',
+                data: {
+                    labels: [...top5.map(i => i.name), otherRevenue > 0 ? 'Others' : null].filter(Boolean),
+                    datasets: [{ data: [...top5.map(i => i.revenue), otherRevenue > 0 ? otherRevenue : null].filter(Boolean), backgroundColor: ['#b8652e', '#2c3e2f', '#6d4c41', '#ff8f00', '#1565c0', '#9e9e9e'] }]
+                },
+                options: { responsive: true, plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ₦${ctx.raw.toLocaleString()}` } } } }
+            });
+        }
+
+        // Update items table
+        function updateItemsTable(sales, start, end) {
+            const itemMetrics = calculateItemMetrics(sales, start, end);
+            const tbody = document.getElementById('itemsBody');
+            
+            if (!itemMetrics.length) {
+                tbody.innerHTML = '<tr><td colspan="8">No sales data in selected period</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = itemMetrics.map(item => {
+                const profitClass = item.profit >= 0 ? 'profit-positive' : 'profit-negative';
+                const trend = item.margin > 50 ? '📈 High' : item.margin > 20 ? '📊 Medium' : '📉 Low';
+                return `
+                    <tr>
+                        <td><strong>${escapeHtml(item.name)}</strong></td>
+                        <td>${escapeHtml(item.category)}</td>
+                        <td>${item.quantity.toLocaleString()}</td>
+                        <td>₦${item.revenue.toLocaleString()}</td>
+                        <td>₦${item.cost.toLocaleString()}</td>
+                        <td class="${profitClass}">₦${item.profit.toLocaleString()}</td>
+                        <td>${item.margin.toFixed(1)}%</td>
+                        <td>${trend}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Update time progression table
+        function updateTimeTable(sales, period, start, end) {
+            const timeData = calculateTimeProgression(sales, period, start, end);
+            const tbody = document.getElementById('timeBody');
+            
+            if (!timeData.length) {
+                tbody.innerHTML = '<tr><td colspan="8">No data available</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = timeData.map(data => {
+                const profitClass = data.profit >= 0 ? 'profit-positive' : 'profit-negative';
+                return `
+                    <tr>
+                        <td><strong>${escapeHtml(data.period)}</strong></td>
+                        <td>${data.orders}</td>
+                        <td>${data.itemsSold.toLocaleString()}</td>
+                        <td>₦${data.revenue.toLocaleString()}</td>
+                        <td>₦${data.cost.toLocaleString()}</td>
+                        <td class="${profitClass}">₦${data.profit.toLocaleString()}</td>
+                        <td>${data.margin.toFixed(1)}%</td>
+                        <td>${escapeHtml(data.topItem)}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Update batches table
+        async function updateBatchesTable(batches, sales, start, end) {
+            const batchPerformance = await calculateBatchPerformance(batches, sales, start, end);
+            const tbody = document.getElementById('batchesBody');
+            
+            if (!batchPerformance.length) {
+                tbody.innerHTML = '<tr><td colspan="10">No batches found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = batchPerformance.map(batch => {
+                const profitClass = batch.profit >= 0 ? 'profit-positive' : 'profit-negative';
+                let statusBadge = '';
+                if (batch.status === 'EMPTY') statusBadge = '<span class="status-badge" style="background:#ffcdd2;color:#c62828;">🔴 EMPTY</span>';
+                else if (batch.status === 'LOW') statusBadge = '<span class="status-badge" style="background:#ffe0b2;color:#ef6c00;">🟡 LOW</span>';
+                else statusBadge = '<span class="status-badge" style="background:#c8e6c9;color:#2e7d32;">🟢 ACTIVE</span>';
+                
+                return `
+                    <tr>
+                        <td><small>${escapeHtml(batch.batchNumber)}</small></td>
+                        <td><strong>${escapeHtml(batch.itemName)}</strong></td>
+                        <td><small>${escapeHtml(batch.batchDate)}</small></td>
+                        <td>${batch.originalQty.toLocaleString()}</td>
+                        <td>${batch.sold.toLocaleString()}</td>
+                        <td>${batch.remaining.toLocaleString()}</td>
+                        <td>₦${batch.purchaseCost.toLocaleString()}</td>
+                        <td>₦${batch.revenueGenerated.toLocaleString()}</td>
+                        <td class="${profitClass}">₦${batch.profit.toLocaleString()}</td>
+                        <td>${statusBadge}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function refreshAll() {
+            const { start, end } = setDateRange(currentRange);
+            currentStartDate = start;
+            currentEndDate = end;
+            
+            document.getElementById('startDate').value = start.toISOString().split('T')[0];
+            document.getElementById('endDate').value = end.toISOString().split('T')[0];
+            
+            updateKPIs(allSales, start, end);
+            updateCharts(allSales, start, end);
+            updateItemsTable(allSales, start, end);
+            updateTimeTable(allSales, currentPeriod, start, end);
+            await updateBatchesTable(allBatches, allSales, start, end);
+        }
+
+        // Load data from Firestore
+        function loadSales() {
+            salesRef.onSnapshot(snapshot => {
+                allSales = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                refreshAll();
+            }, error => console.error('Sales error:', error));
+        }
+
+        function loadBatches() {
+            batchesRef.onSnapshot(snapshot => {
+                allBatches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                refreshAll();
+            }, error => console.error('Batches error:', error));
+        }
+
+        function loadMenuItems() {
+            menuItemsRef.onSnapshot(snapshot => {
+                menuItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            }, error => console.error('Menu error:', error));
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+        }
+
+        function exportItemsData() {
+            const itemMetrics = calculateItemMetrics(allSales, currentStartDate, currentEndDate);
+            const headers = ['Item Name', 'Category', 'Quantity Sold', 'Revenue (₦)', 'Cost (₦)', 'Profit (₦)', 'Margin (%)'];
+            const rows = itemMetrics.map(item => [item.name, item.category, item.quantity, item.revenue, item.cost, item.profit, item.margin.toFixed(1)]);
+            const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `tpot_items_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Event listeners
+        document.querySelectorAll('.quick-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentRange = btn.dataset.range;
+                refreshAll();
+            });
+        });
+        
+        document.querySelectorAll('.time-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.time-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentPeriod = tab.dataset.period;
+                const { start, end } = setDateRange(currentRange);
+                updateTimeTable(allSales, currentPeriod, start, end);
+            });
+        });
+        
+        document.getElementById('refreshBtn').addEventListener('click', refreshAll);
+        document.getElementById('exportItemsBtn').addEventListener('click', exportItemsData);
+        
+        document.getElementById('startDate').addEventListener('change', () => {
+            const start = new Date(document.getElementById('startDate').value);
+            const end = document.getElementById('endDate').value ? new Date(document.getElementById('endDate').value) : new Date();
+            end.setHours(23, 59, 59, 999);
+            start.setHours(0, 0, 0, 0);
+            currentRange = 'custom';
+            document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
+            currentStartDate = start;
+            currentEndDate = end;
+            refreshAll();
+        });
+        
+        document.getElementById('endDate').addEventListener('change', () => {
+            const start = document.getElementById('startDate').value ? new Date(document.getElementById('startDate').value) : new Date(0);
+            const end = new Date(document.getElementById('endDate').value);
+            end.setHours(23, 59, 59, 999);
+            start.setHours(0, 0, 0, 0);
+            currentRange = 'custom';
+            document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
+            currentStartDate = start;
+            currentEndDate = end;
+            refreshAll();
+        });
+        
+        // Initialize
+        loadSales();
+        loadBatches();
+        loadMenuItems();
+    </script>
+</body>
+</html>

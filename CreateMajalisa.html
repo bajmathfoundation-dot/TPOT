@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>TPOT Shop | Create Majalisa</title>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f2f4f8;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            padding: 2rem 1rem;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .form-card {
+            max-width: 720px;
+            width: 100%;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.02);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #eaedf0;
+            background: #ffffff;
+        }
+
+        .card-header h1 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #1a2c1c;
+            letter-spacing: -0.2px;
+            margin-bottom: 0.25rem;
+        }
+
+        .card-header p {
+            color: #5c6f5a;
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        .form-body {
+            padding: 1.75rem 2rem 2rem;
+        }
+
+        .form-row {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #2c3e2a;
+            margin-bottom: 0.5rem;
+        }
+
+        .required {
+            color: #c23d3d;
+            margin-left: 2px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.7rem 0.9rem;
+            font-size: 0.95rem;
+            font-family: inherit;
+            border: 1px solid #cdd5df;
+            border-radius: 12px;
+            background: #ffffff;
+            transition: all 0.2s ease;
+            outline: none;
+            color: #1a2c1c;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: #8ba888;
+            box-shadow: 0 0 0 3px rgba(100, 130, 80, 0.15);
+        }
+
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .three-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .radio-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.2rem;
+            background: #f9fafb;
+            padding: 0.65rem 1rem;
+            border-radius: 14px;
+            border: 1px solid #eef2f5;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 0.85rem;
+            font-weight: 450;
+            cursor: pointer;
+            color: #2a3a27;
+        }
+
+        .radio-option input {
+            width: 16px;
+            height: 16px;
+            accent-color: #4a6741;
+            margin: 0;
+        }
+
+        hr {
+            margin: 1.25rem 0;
+            border: none;
+            border-top: 1px solid #eef2f5;
+        }
+
+        .submit-btn {
+            background: #2a4230;
+            color: white;
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 0.85rem 1.25rem;
+            border: none;
+            border-radius: 40px;
+            width: 100%;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 0.5rem;
+            font-family: inherit;
+        }
+
+        .submit-btn:hover {
+            background: #1f3325;
+        }
+
+        .submit-btn:disabled {
+            background: #9aae94;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .message-box {
+            margin-top: 1.25rem;
+            padding: 0.85rem 1rem;
+            border-radius: 14px;
+            font-size: 0.85rem;
+            font-weight: 450;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            background: #f0f9ed;
+            border-left: 4px solid #4a7c59;
+            color: #1c4827;
+        }
+
+        .message-box.error {
+            background: #fef3f2;
+            border-left-color: #d9534f;
+            color: #b13a3a;
+        }
+
+        .message-box.loading {
+            background: #eef2fa;
+            border-left-color: #5a7a9a;
+            color: #2c5282;
+        }
+
+        .message-box.show {
+            display: flex;
+        }
+
+        .footer-note {
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 0.7rem;
+            color: #8b9a83;
+            border-top: 1px solid #eaedf0;
+            padding-top: 1.2rem;
+        }
+
+        @media (max-width: 650px) {
+            .three-columns {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 550px) {
+            .form-body {
+                padding: 1.5rem;
+            }
+            .card-header {
+                padding: 1.2rem 1.5rem;
+            }
+            .two-columns {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            .radio-group {
+                gap: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="form-card">
+    <div class="card-header">
+        <h1>Create a majalisa</h1>
+        <p>For group gatherings · TPOT shop will connect with you</p>
+    </div>
+    <div class="form-body">
+        <form id="majalisaForm">
+            <!-- Majalisa Name -->
+            <div class="form-row">
+                <label>Majalisa name <span class="required">*</span></label>
+                <input type="text" id="majalisaName" placeholder="e.g., Al Nahda Circle, Thursday Friends" autocomplete="off">
+            </div>
+
+            <!-- Location -->
+            <div class="form-row">
+                <label>Location / venue <span class="required">*</span></label>
+                <input type="text" id="location" placeholder="Street, area, city or landmark">
+                <div style="font-size: 0.7rem; color: #7c8b72; margin-top: 0.3rem;">Where does your group meet?</div>
+            </div>
+
+            <!-- CONTACT SECTION: Phone & Email (Required for reach) -->
+            <div class="form-row">
+                <label style="margin-bottom: 0.75rem;">📞 Contact information <span class="required">*</span></label>
+                <div class="two-columns">
+                    <div>
+                        <input type="tel" id="phone" placeholder="Phone number *" style="width: 100%;">
+                    </div>
+                    <div>
+                        <input type="email" id="email" placeholder="Email address *" style="width: 100%;">
+                    </div>
+                </div>
+                <div style="font-size: 0.7rem; color: #7c8b72; margin-top: 0.3rem;">We'll reach you via phone or email to confirm your majalisa.</div>
+            </div>
+
+            <!-- Two columns: Group leader + Max capacity -->
+            <div class="two-columns">
+                <div class="form-row">
+                    <label>Group leader / host</label>
+                    <input type="text" id="leader" placeholder="Your name">
+                </div>
+                <div class="form-row">
+                    <label>Max capacity (optional)</label>
+                    <input type="number" id="capacity" placeholder="e.g., 20" min="1">
+                </div>
+            </div>
+
+            <!-- Group Type -->
+            <div class="form-row">
+                <label>Group type</label>
+                <div class="radio-group">
+                    <label class="radio-option">
+                        <input type="radio" name="groupType" value="Friends & Family" checked> Friends & Family
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="groupType" value="Community"> Community
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="groupType" value="Sports / Hobby"> Sports / Hobby
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="groupType" value="Professional"> Professional
+                    </label>
+                </div>
+            </div>
+
+            <!-- Meeting schedule -->
+            <div class="two-columns">
+                <div class="form-row">
+                    <label>Meeting day</label>
+                    <select id="meetingDay">
+                        <option value="">Select day (optional)</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday">Saturday</option>
+                        <option value="Sunday">Sunday</option>
+                        <option value="Flexible">Flexible</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label>Preferred time</label>
+                    <input type="text" id="meetingTime" placeholder="e.g., 7:00 PM">
+                </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="form-row">
+                <label>Additional notes (optional)</label>
+                <textarea id="notes" rows="2" placeholder="Special requests, traditions, or anything we should know..."></textarea>
+            </div>
+
+            <hr>
+
+            <button type="submit" class="submit-btn" id="submitBtn">Create majalisa</button>
+        </form>
+
+        <div id="formMessage" class="message-box"></div>
+        <div class="footer-note">
+            Once created, your majalisa will be saved securely. Our team will contact you using the provided phone/email.
+        </div>
+    </div>
+</div>
+
+<script>
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyDRKWldl8_NSAek4na-H-SQWjUBrxt26iI",
+        authDomain: "tpot.com.ng",
+        projectId: "t-pot-60c3d",
+        storageBucket: "t-pot-60c3d.firebasestorage.app",
+        messagingSenderId: "272048176539",
+        appId: "1:272048176539:web:d73d09a39171c8ef12753e"
+    };
+    
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    
+    console.log("Firebase initialized, Firestore ready");
+
+    // DOM elements
+    const form = document.getElementById('majalisaForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const messageBox = document.getElementById('formMessage');
+
+    // Helper: Show message
+    function showMessage(text, type = 'success') {
+        messageBox.innerHTML = '';
+        const iconSpan = document.createElement('span');
+        iconSpan.style.fontSize = '1rem';
+        
+        if (type === 'error') {
+            iconSpan.textContent = '⚠️';
+            messageBox.classList.add('error');
+            messageBox.classList.remove('loading');
+        } else if (type === 'loading') {
+            iconSpan.textContent = '⏳';
+            messageBox.classList.add('loading');
+            messageBox.classList.remove('error');
+        } else {
+            iconSpan.textContent = '✓';
+            messageBox.classList.remove('error', 'loading');
+        }
+        
+        const textSpan = document.createElement('span');
+        textSpan.textContent = text;
+        messageBox.appendChild(iconSpan);
+        messageBox.appendChild(textSpan);
+        messageBox.classList.add('show');
+        
+        // Auto hide after 5 seconds for non-loading messages
+        if (type !== 'loading') {
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+            }, 5000);
+        }
+    }
+
+    function hideMessage() {
+        messageBox.classList.remove('show');
+    }
+
+    // Get selected group type
+    function getSelectedGroupType() {
+        const radios = document.querySelectorAll('input[name="groupType"]');
+        for (let radio of radios) {
+            if (radio.checked) return radio.value;
+        }
+        return 'Friends & Family';
+    }
+
+    // Validate email format
+    function isValidEmail(email) {
+        if (!email) return false;
+        const emailRegex = /^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/;
+        return emailRegex.test(email);
+    }
+
+    // Validate phone (basic: at least 5 digits, allows + and spaces/dashes)
+    function isValidPhone(phone) {
+        if (!phone) return false;
+        // Remove spaces, dashes, parentheses, plus sign allowed only at start
+        const cleaned = phone.replace(/[\s\-\(\)]/g, '');
+        // Allow optional '+' at beginning, then digits (min 5, max 15)
+        const phoneRegex = /^\+?[0-9]{5,15}$/;
+        return phoneRegex.test(cleaned);
+    }
+
+    // Validate and build majalisa object
+    function buildMajalisaData() {
+        const name = document.getElementById('majalisaName').value.trim();
+        const location = document.getElementById('location').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const leader = document.getElementById('leader').value.trim() || '';
+        const capacityRaw = document.getElementById('capacity').value.trim();
+        const groupType = getSelectedGroupType();
+        const meetingDay = document.getElementById('meetingDay').value;
+        const meetingTime = document.getElementById('meetingTime').value.trim();
+        const notes = document.getElementById('notes').value.trim();
+
+        // Validation: majalisa name & location required
+        if (name === '') {
+            showMessage('Please enter a majalisa name.', 'error');
+            return null;
+        }
+        if (location === '') {
+            showMessage('Please provide a location where your group meets.', 'error');
+            return null;
+        }
+        
+        // Contact validation: at least one contact method (phone or email) is required for shop to follow up
+        if (phone === '' && email === '') {
+            showMessage('Please provide at least one contact method: phone number or email address.', 'error');
+            return null;
+        }
+        
+        // Validate phone format if provided
+        if (phone !== '' && !isValidPhone(phone)) {
+            showMessage('Please enter a valid phone number (minimum 5 digits, only numbers, spaces, +, -, parentheses).', 'error');
+            return null;
+        }
+        
+        // Validate email format if provided
+        if (email !== '' && !isValidEmail(email)) {
+            showMessage('Please enter a valid email address (e.g., name@example.com).', 'error');
+            return null;
+        }
+
+        let capacity = null;
+        if (capacityRaw !== '') {
+            const parsed = parseInt(capacityRaw, 10);
+            if (isNaN(parsed) || parsed < 1) {
+                showMessage('Max capacity must be a positive number.', 'error');
+                return null;
+            }
+            capacity = parsed;
+        }
+
+        // Build majalisa object for Firestore with contact fields
+        return {
+            majalisaName: name,
+            location: location,
+            contactPhone: phone || null,
+            contactEmail: email || null,
+            groupLeader: leader || 'Not specified',
+            maxCapacity: capacity,
+            groupType: groupType,
+            meetingDay: meetingDay || 'Not set',
+            meetingTime: meetingTime || 'Flexible',
+            notes: notes || '—',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            status: 'pending',  // pending review
+            source: 'TPOT Shop Web Form'
+        };
+    }
+
+    // Save to Firestore collection "majalisa"
+    async function saveToFirestore(majalisaData) {
+        try {
+            // Add document to 'majalisa' collection
+            const docRef = await db.collection('majalisa').add(majalisaData);
+            console.log('Majalisa saved with ID:', docRef.id);
+            return { success: true, id: docRef.id };
+        } catch (error) {
+            console.error('Firestore error:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    // Reset form fields after success
+    function resetForm() {
+        document.getElementById('majalisaName').value = '';
+        document.getElementById('location').value = '';
+        document.getElementById('phone').value = '';
+        document.getElementById('email').value = '';
+        document.getElementById('leader').value = '';
+        document.getElementById('capacity').value = '';
+        document.getElementById('meetingDay').value = '';
+        document.getElementById('meetingTime').value = '';
+        document.getElementById('notes').value = '';
+        // Reset radio to default
+        const defaultRadio = document.querySelector('input[name="groupType"][value="Friends & Family"]');
+        if (defaultRadio) defaultRadio.checked = true;
+        
+        // Reset any custom validation styles
+        const nameField = document.getElementById('majalisaName');
+        const locationField = document.getElementById('location');
+        const phoneField = document.getElementById('phone');
+        const emailField = document.getElementById('email');
+        if (nameField) nameField.style.borderColor = '#cdd5df';
+        if (locationField) locationField.style.borderColor = '#cdd5df';
+        if (phoneField) phoneField.style.borderColor = '#cdd5df';
+        if (emailField) emailField.style.borderColor = '#cdd5df';
+    }
+
+    // Handle form submission
+    async function handleSubmit(event) {
+        event.preventDefault();
+        
+        hideMessage();
+        
+        // Build data with validation
+        const majalisaData = buildMajalisaData();
+        if (!majalisaData) return;
+        
+        // Disable button and show loading state
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving...';
+        showMessage('Saving your majalisa to the database...', 'loading');
+        
+        // Save to Firestore
+        const result = await saveToFirestore(majalisaData);
+        
+        if (result.success) {
+            // Build contact info summary for success message
+            let contactSummary = '';
+            if (majalisaData.contactPhone && majalisaData.contactEmail) {
+                contactSummary = `📞 ${majalisaData.contactPhone} · ✉️ ${majalisaData.contactEmail}`;
+            } else if (majalisaData.contactPhone) {
+                contactSummary = `📞 ${majalisaData.contactPhone}`;
+            } else if (majalisaData.contactEmail) {
+                contactSummary = `✉️ ${majalisaData.contactEmail}`;
+            }
+            
+            showMessage(`✓ "${majalisaData.majalisaName}" has been created and saved successfully! ${contactSummary ? 'We will contact you at ' + contactSummary : ''} Reference ID: ${result.id.slice(0, 8)}...`, 'success');
+            
+            // Reset form for new entry
+            resetForm();
+            
+            // Scroll to top to show success message
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            showMessage(`Failed to save: ${result.error}. Please check your connection and try again.`, 'error');
+        }
+        
+        // Re-enable button
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create majalisa';
+        
+        // Auto-hide loading message after 3s if still present
+        setTimeout(() => {
+            if (messageBox.classList.contains('loading')) {
+                messageBox.classList.remove('show');
+            }
+        }, 3000);
+    }
+
+    // Add event listener
+    form.addEventListener('submit', handleSubmit);
+
+    // Basic inline validation for capacity field
+    const capacityInput = document.getElementById('capacity');
+    capacityInput.addEventListener('input', function() {
+        const val = this.value.trim();
+        if (val !== '') {
+            const num = Number(val);
+            if (isNaN(num) || num < 1) {
+                this.setCustomValidity('Enter positive number');
+            } else {
+                this.setCustomValidity('');
+            }
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+    
+    // Visual cue for required fields on blur (including contact fields highlight)
+    const nameField = document.getElementById('majalisaName');
+    const locationField = document.getElementById('location');
+    const phoneField = document.getElementById('phone');
+    const emailField = document.getElementById('email');
+    
+    function markRequiredField(field, isContact = false) {
+        if (!field) return;
+        // For contact fields: they are collectively required (at least one), but we only highlight empty both? Instead simple red if both empty on blur
+        if (isContact) {
+            const phoneVal = phoneField.value.trim();
+            const emailVal = emailField.value.trim();
+            if (phoneVal === '' && emailVal === '') {
+                phoneField.style.borderColor = '#e0acac';
+                emailField.style.borderColor = '#e0acac';
+            } else {
+                phoneField.style.borderColor = '#cdd5df';
+                emailField.style.borderColor = '#cdd5df';
+            }
+        } else {
+            if (field.value.trim() === '') {
+                field.style.borderColor = '#e0acac';
+            } else {
+                field.style.borderColor = '#cdd5df';
+            }
+        }
+    }
+    
+    nameField.addEventListener('blur', () => markRequiredField(nameField, false));
+    locationField.addEventListener('blur', () => markRequiredField(locationField, false));
+    nameField.addEventListener('input', () => { if(nameField.value.trim() !== '') nameField.style.borderColor = '#cdd5df'; });
+    locationField.addEventListener('input', () => { if(locationField.value.trim() !== '') locationField.style.borderColor = '#cdd5df'; });
+    
+    // Contact fields: highlight if both empty on blur
+    function validateContactOnBlur() {
+        const phoneVal = phoneField.value.trim();
+        const emailVal = emailField.value.trim();
+        if (phoneVal === '' && emailVal === '') {
+            phoneField.style.borderColor = '#e0acac';
+            emailField.style.borderColor = '#e0acac';
+        } else {
+            phoneField.style.borderColor = '#cdd5df';
+            emailField.style.borderColor = '#cdd5df';
+        }
+    }
+    
+    phoneField.addEventListener('blur', validateContactOnBlur);
+    emailField.addEventListener('blur', validateContactOnBlur);
+    phoneField.addEventListener('input', () => { if(phoneField.value.trim() !== '') phoneField.style.borderColor = '#cdd5df'; validateContactOnBlur(); });
+    emailField.addEventListener('input', () => { if(emailField.value.trim() !== '') emailField.style.borderColor = '#cdd5df'; validateContactOnBlur(); });
+    
+    // Clear message when user focuses on any input (better UX)
+    const allInputs = ['majalisaName', 'location', 'phone', 'email', 'leader', 'capacity', 'meetingTime', 'notes'];
+    allInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('focus', () => {
+                if (messageBox.classList.contains('show') && !messageBox.classList.contains('loading')) {
+                    messageBox.classList.remove('show');
+                }
+            });
+        }
+    });
+    
+    const meetingDaySelect = document.getElementById('meetingDay');
+    if (meetingDaySelect) {
+        meetingDaySelect.addEventListener('focus', () => {
+            if (messageBox.classList.contains('show') && !messageBox.classList.contains('loading')) {
+                messageBox.classList.remove('show');
+            }
+        });
+    }
+    
+    const radioOptions = document.querySelectorAll('input[name="groupType"]');
+    radioOptions.forEach(radio => {
+        radio.addEventListener('focus', () => {
+            if (messageBox.classList.contains('show') && !messageBox.classList.contains('loading')) {
+                messageBox.classList.remove('show');
+            }
+        });
+    });
+    
+    // Test Firestore connection on load (silent)
+    (async function testConnection() {
+        try {
+            const testQuery = await db.collection('majalisa').limit(1).get();
+            console.log('Firestore connection successful, collection accessible');
+        } catch (err) {
+            console.warn('Firestore connection warning:', err.message);
+        }
+    })();
+</script>
+</body>
+</html>

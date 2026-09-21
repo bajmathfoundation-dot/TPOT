@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T-POT & Snacks | Student Sign Up & Bonuses</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #FFFBF5;
+            color: #5D4037;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            background-color: #FFFBF5;
+            color: #8D6E63;
+            padding: 15px 0;
+            box-shadow: 0 4px 20px rgba(141, 110, 99, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(141, 110, 99, 0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo-icon {
+            font-size: 3rem;
+            color: #D7CCC8;
+            font-weight: bold;
+            text-shadow: 2px 2px 0px rgba(141, 110, 99, 0.2);
+        }
+        
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1;
+        }
+        
+        .logo-main {
+            font-size: 2.8rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #8D6E63;
+        }
+        
+        .logo-main .big-t {
+            font-size: 3.5rem;
+            color: #A1887F;
+            display: inline-block;
+            transform: translateY(5px);
+        }
+        
+        .logo-sub {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #A1887F;
+            letter-spacing: 1.5px;
+            margin-top: -5px;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+        }
+        
+        nav a {
+            color: #8D6E63;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            padding: 8px 15px;
+            border-radius: 4px;
+            position: relative;
+        }
+        
+        nav a:hover {
+            color: #5D4037;
+            background-color: rgba(141, 110, 99, 0.1);
+        }
+        
+        nav a.active {
+            color: #5D4037;
+            background-color: rgba(161, 136, 127, 0.2);
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: #8D6E63;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .student-hero {
+            background: linear-gradient(rgba(255, 251, 245, 0.9), rgba(255, 251, 245, 0.95)), url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80');
+            background-size: cover;
+            background-position: center;
+            text-align: center;
+            padding: 100px 20px;
+            margin-bottom: 60px;
+        }
+        
+        .student-hero h1 {
+            font-size: 3.5rem;
+            color: #8D6E63;
+            margin-bottom: 20px;
+        }
+        
+        .student-hero p {
+            font-size: 1.3rem;
+            max-width: 700px;
+            margin: 0 auto 30px;
+            color: #5D4037;
+        }
+        
+        .student-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background-color: #A1887F;
+            color: #FFFBF5;
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-top: 20px;
+        }
+        
+        .student-badge a {
+            color: #FFFBF5;
+            text-decoration: none;
+        }
+        
+        .bonuses-section {
+            padding: 80px 0;
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 50px;
+            color: #8D6E63;
+            font-size: 2.5rem;
+            position: relative;
+            font-weight: 700;
+        }
+        
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 100px;
+            height: 5px;
+            background-color: #D7CCC8;
+            margin: 15px auto;
+            border-radius: 5px;
+        }
+        
+        .bonuses-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+        
+        .bonus-card {
+            background-color: #FFFBF5;
+            border-radius: 10px;
+            padding: 35px;
+            box-shadow: 0 8px 20px rgba(141, 110, 99, 0.08);
+            border: 1px solid rgba(141, 110, 99, 0.1);
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .bonus-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(141, 110, 99, 0.15);
+        }
+        
+        .bonus-icon {
+            font-size: 3rem;
+            color: #A1887F;
+            margin-bottom: 20px;
+        }
+        
+        .bonus-card h3 {
+            color: #8D6E63;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .bonus-card p {
+            color: #5D4037;
+            margin-bottom: 20px;
+        }
+        
+        .bonus-value {
+            display: inline-block;
+            background-color: #F5EFE6;
+            color: #8D6E63;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+        
+        .signup-section {
+            padding: 80px 0;
+            background-color: #F5EFE6;
+            border-radius: 20px;
+            margin: 60px 0;
+        }
+        
+        .signup-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .form-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .form-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #8D6E63;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #D7CCC8;
+            border-radius: 5px;
+            font-size: 1rem;
+            background-color: #FFFBF5;
+            color: #5D4037;
+            transition: border 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: #A1887F;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(161, 136, 127, 0.1);
+        }
+        
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238D6E63' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 15px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .checkbox-group input {
+            margin-top: 5px;
+        }
+        
+        .checkbox-group label {
+            font-size: 0.9rem;
+            color: #5D4037;
+        }
+        
+        .checkbox-group a {
+            color: #A1887F;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .submit-btn {
+            background-color: #A1887F;
+            color: #FFFBF5;
+            border: none;
+            padding: 18px 40px;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+            grid-column: 1 / -1;
+        }
+        
+        .submit-btn:hover {
+            background-color: #8D6E63;
+        }
+        
+        .submit-btn:disabled {
+            background-color: #D7CCC8;
+            cursor: not-allowed;
+        }
+        
+        footer {
+            background-color: #F5EFE6;
+            color: #5D4037;
+            padding: 50px 0 20px;
+            margin-top: 60px;
+            border-top: 1px solid #D7CCC8;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 40px;
+            margin-bottom: 30px;
+        }
+        
+        .footer-section {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .footer-section h3 {
+            color: #8D6E63;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        
+        .social-icons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .social-icons a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(141, 110, 99, 0.1);
+            border-radius: 50%;
+            color: #8D6E63;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .social-icons a:hover {
+            background-color: #8D6E63;
+            color: #FFFBF5;
+            transform: translateY(-5px);
+        }
+        
+        .copyright {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(141, 110, 99, 0.1);
+            font-size: 0.9rem;
+            color: #8D6E63;
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(93, 64, 55, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+            padding: 20px;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal {
+            background-color: #FFFBF5;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            padding: 40px;
+            position: relative;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #8D6E63;
+            cursor: pointer;
+        }
+        
+        .modal-icon {
+            font-size: 4rem;
+            color: #A1887F;
+            margin-bottom: 20px;
+        }
+        
+        .modal h2 {
+            color: #8D6E63;
+            margin-bottom: 15px;
+        }
+        
+        .modal p {
+            color: #5D4037;
+            margin-bottom: 25px;
+        }
+        
+        @media (max-width: 768px) {
+            nav ul {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background-color: #FFFBF5;
+                flex-direction: column;
+                padding: 20px;
+                text-align: center;
+                box-shadow: 0 10px 15px rgba(141, 110, 99, 0.1);
+                z-index: 100;
+                border-top: 1px solid rgba(141, 110, 99, 0.1);
+            }
+            
+            nav ul.active {
+                display: flex;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .student-hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .student-hero p {
+                font-size: 1.1rem;
+            }
+            
+            .section-title {
+                font-size: 2.2rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .bonuses-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .student-hero {
+                padding: 80px 20px;
+            }
+            
+            .modal {
+                padding: 30px 20px;
+            }
+        }
+        
+        .error-message {
+            color: #D32F2F;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .error-message.active {
+            display: block;
+        }
+        
+        .form-control.error {
+            border-color: #D32F2F;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 251, 245, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        
+        .loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            border: 5px solid #D7CCC8;
+            border-top: 5px solid #A1887F;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            color: #8D6E63;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .error-modal .modal-icon {
+            color: #D32F2F;
+        }
+
+        .info-message {
+            background: #E8F0FE;
+            border-left: 4px solid #A1887F;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            margin-top: 8px;
+            color: #5D4037;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text" id="loadingText">Processing...</div>
+    </div>
+
+    <header>
+        <div class="container header-content">
+            <div class="logo">
+                <div class="logo-icon"><span class="big-t"></span></div>
+                <div class="logo-text">
+                    <div class="logo-main"><span class="big-t">T</span>-POT</div>
+                    <div class="logo-sub">& SNACKS</div>
+                </div>
+            </div>
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <nav>
+                <ul id="mainNav">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="gallery.html">Gallery</a></li>
+                    <li><a href="Student.html" class="active">Student Bonuses</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="student-hero">
+        <div class="container">
+            <h1>Student Special Bonuses</h1>
+            <p>Exclusive discounts, rewards, and bonuses for Gombe State University students! Sign up now and enjoy special student-only benefits.</p>
+            <div class="student-badge">
+                <a href="StudentLogin.html" target="_blank" rel="noopener noreferrer">
+                    <i class="fas fa-graduation-cap"></i> GSU Students Welcome Back!
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="bonuses-section">
+        <div class="container">
+            <h2 class="section-title">Student Exclusive Benefits</h2>
+            <div class="bonuses-grid">
+                <div class="bonus-card"><div class="bonus-icon"><i class="fas fa-gift"></i></div><h3>Welcome Bonus</h3><p>Get <strong>₦500 credit</strong> instantly when you sign up with your student ID to buy Tea</p><div class="bonus-value">₦500 FREE</div></div>
+                <div class="bonus-card"><div class="bonus-icon"><i class="fas fa-percentage"></i></div><h3>Student Discount</h3><p>Enjoy <strong>2% OFF</strong> on all orders every Friday</p><div class="bonus-value">2% OFF</div></div>
+                <div class="bonus-card"><div class="bonus-icon"><i class="fas fa-coffee"></i></div><h3>Free Tea Fridays</h3><p>Get a <strong>FREE T-POT tea</strong> with any order over ₦3,000 every Friday</p><div class="bonus-value">FREE TEA</div></div>
+                <div class="bonus-card"><div class="bonus-icon"><i class="fas fa-star"></i></div><h3>Rewards Points</h3><p>Earn <strong>points</strong> by playing games. Redeem for free meals!</p><div class="bonus-value">3x POINTS</div></div>
+                <div class="bonus-card"><div class="bonus-icon"><i class="fas fa-users"></i></div><h3>Group Order Bonus</h3><p>Order with 3+ friends and get <strong>extra 5% discount</strong> on total bill</p><div class="bonus-value">5% EXTRA</div></div>
+                <div class="bonus-card"><div class="bonus-icon"><i class="fas fa-birthday-cake"></i></div><h3>Birthday Treat</h3><p>Get a <strong>FREE dessert</strong> of your choice during your birthday month</p><div class="bonus-value">FREE DESSERT</div></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="signup-section">
+        <div class="container">
+            <div class="signup-container">
+                <h2 class="section-title">Student Sign Up</h2>
+                <p style="text-align: center; margin-bottom: 40px; color: #5D4037;">Fill in your details to unlock all student benefits</p>
+                <form id="studentSignupForm">
+                    <div class="form-container">
+                        <div class="form-group"><label class="form-label">Full Name *</label><input type="text" class="form-control" id="fullName" required><div class="error-message" id="nameError">Please enter your full name</div></div>
+                        <div class="form-group"><label class="form-label">Phone Number *</label><input type="tel" class="form-control" id="phoneNumber" required placeholder="08101234567"><div class="error-message" id="phoneError">Please enter a valid 11-digit phone number</div></div>
+                        
+                        <!-- NEW UG FORMAT: UG(year)/dept/number -->
+                        <div class="form-group"><label class="form-label">Student ID Number * (UG Format)</label><input type="text" class="form-control" id="studentId" required placeholder="UG23/ASPA/1001"><div class="error-message" id="idError">Please enter a valid UG ID: UG(year)/dept/number (e.g., UG23/ASPA/1001)</div><div class="info-message" id="levelAutoDetectMsg"></div></div>
+                        
+                        <div class="form-group"><label class="form-label">Faculty/Department *</label><select class="form-control form-select" id="faculty" required><option value="">Select Faculty</option><option value="science">Faculty of Science</option><option value="arts">Faculty of Arts</option><option value="social">Faculty of Social Sciences</option><option value="education">Faculty of Education</option><option value="law">Faculty of Law</option><option value="medicine">Faculty of Medicine</option><option value="management">Faculty of Management Sciences</option><option value="agriculture">Faculty of Agriculture</option><option value="other">Other</option></select><div class="error-message" id="facultyError">Please select your faculty</div></div>
+                        
+                        <div class="form-group"><label class="form-label">Course of Study / Department *</label><select class="form-control form-select" id="course" required disabled><option value="">Select Faculty First</option></select><div class="error-message" id="courseError">Please select your course of study</div></div>
+                        
+                        <div class="form-group"><label class="form-label">Level/Year *</label><select class="form-control form-select" id="level" required><option value="">Select Level</option><option value="100">100 Level</option><option value="200">200 Level</option><option value="300">300 Level</option><option value="400">400 Level</option><option value="500">500 Level</option><option value="600">600 Level</option><option value="postgraduate">Postgraduate</option></select><div class="error-message" id="levelError">Please select your level</div></div>
+                        
+                        <div class="form-group"><label class="form-label">Email Address</label><input type="email" class="form-control" id="email" placeholder="student@example.com"><div class="error-message" id="emailError">Please enter a valid email address</div></div>
+                        <div class="form-group"><label class="form-label">Create Password *</label><input type="password" class="form-control" id="password" required minlength="6"><div class="error-message" id="passwordError">Password must be at least 6 characters</div></div>
+                        <div class="form-group"><label class="form-label">Confirm Password *</label><input type="password" class="form-control" id="confirmPassword" required><div class="error-message" id="confirmPasswordError">Passwords do not match</div></div>
+                        
+                        <div class="form-group full-width">
+                            <div class="checkbox-group"><input type="checkbox" id="terms" required><label for="terms">I agree to the <a href="#" id="termsLink">Terms and Conditions</a> and <a href="#" id="privacyLink">Privacy Policy</a></label></div><div class="error-message" id="termsError">You must agree to the terms</div>
+                            <div class="checkbox-group"><input type="checkbox" id="marketing" checked><label for="marketing">I want to receive special offers, discounts and updates via SMS/WhatsApp</label></div>
+                        </div>
+                        <button type="submit" class="submit-btn" id="submitBtn"><i class="fas fa-user-plus"></i> Sign Up & Get ₦500 Bonus</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <footer><div class="container"><div class="footer-content"><div class="footer-section"><h3>T-POT & SNACKS</h3><p>Your favorite spot near GSU Second Gate. Special discounts and bonuses for all Gombe State University students!</p><div class="social-icons"><a href="https://wa.me/2348064047497"><i class="fab fa-whatsapp"></i></a></div></div><div class="footer-section"><h3>Student Benefits</h3><ul><li>₦500 Welcome Bonus</li><li>5% Student Discount</li><li>Special Fridays</li><li>Rewards Points System</li></ul></div><div class="footer-section"><h3>Address</h3><p>Opposite GSU Second Gate, Gombe</p><p>Student Hours: 8AM - 10PM Daily</p></div></div><div class="copyright"><p>&copy; 2026 T-POT & SNACKS Restaurant. All rights reserved. | Exclusive Student Program</p><p style="margin-top: 10px; font-size: 0.8rem;">Student discounts valid with valid student ID. One account per student.</p></div></div></footer>
+
+    <div class="modal-overlay" id="successModal"><div class="modal"><button class="modal-close" id="modalClose">&times;</button><div class="modal-icon"><i class="fas fa-check-circle"></i></div><h2>Welcome to T-POT Student Rewards!</h2><p>Your account has been created successfully. You've received <strong>₦500 welcome bonus</strong> and <strong>500 reward points</strong>.</p><p>Your student record has been saved to the <strong>studentlist</strong> collection with a unique document ID.</p><button class="submit-btn" id="continueBtn" style="margin-top: 20px;">Continue to T-POT Homepage</button></div></div>
+    <div class="modal-overlay" id="errorModal"><div class="modal error-modal"><button class="modal-close" id="errorModalClose">&times;</button><div class="modal-icon"><i class="fas fa-exclamation-circle"></i></div><h2 id="errorTitle">Registration Failed</h2><p id="errorMessage">An error occurred during registration. Please try again.</p><button class="submit-btn" id="errorOkBtn" style="margin-top: 20px;">OK</button></div></div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDRKWldl8_NSAek4na-H-SQWjUBrxt26iI",
+            authDomain: "tpot.com.ng",
+            projectId: "t-pot-60c3d",
+            storageBucket: "t-pot-60c3d.firebasestorage.app",
+            messagingSenderId: "272048176539",
+            appId: "1:272048176539:web:d73d09a39171c8ef12753e",
+            measurementId: "G-VLSBVKXPXP"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const analytics = firebase.analytics();
+
+        // Complete course mapping - NO duplicates across faculties
+        const gsuCourses = {
+            science: ["B.Sc. Biochemistry", "B.Sc. Biological Science(s)", "B.Sc. Biology", "B.Sc. Botany", "B.Sc. Chemistry", "B.Sc. Computer Science", "B.Sc. Geology", "B.Sc. Mathematics", "B.Sc. Microbiology", "B.Sc. Physics", "B.Sc. Physiology", "B.Sc. Science Laboratory Technology", "B.Sc. Statistics", "B.Sc. Zoology"],
+            arts: ["BA Christian Religious Studies", "BA English Language", "BA History", "BA Islamic Studies"],
+            social: ["B.Sc. Economics", "B.Sc. Geography", "B.Sc. Political Science", "B.Sc. Public Administration", "B.Sc. Sociology"],
+            education: ["B.Sc. Ed. Biology", "B.Sc. Ed. Chemistry", "BA Ed. Christian Religious Studies", "B.Sc. Ed. Computer Science", "B.Sc. Ed. Economics", "BA Ed. English Language", "B.Sc. Ed. Geography", "BA Ed. History", "BA Ed. Islamic Studies", "B.Sc. Ed. Mathematics", "B.Sc. Ed. Physics", "B.Sc. Ed. Political Science", "Teacher Education Science"],
+            law: ["LL.B. Law"],
+            medicine: ["B.Sc. Anatomy", "MBBS Medicine & Surgery", "B.Pharm Pharmacy"],
+            management: ["B.Sc. Accounting", "B.Sc. Business Administration"],
+            agriculture: ["B. Agriculture"],
+            other: ["Pre-Degree Programme", "Diploma Programmes", "General Studies", "Other Course"]
+        };
+        
+        const facultySelect = document.getElementById('faculty');
+        const courseSelect = document.getElementById('course');
+        const studentIdInput = document.getElementById('studentId');
+        const levelSelect = document.getElementById('level');
+        const levelAutoDetectMsg = document.getElementById('levelAutoDetectMsg');
+
+        // Function to check if a faculty requires 5-6 years (Law and Medicine)
+        function isLongDurationCourse(facultyValue) {
+            if (!facultyValue) return false;
+            const longDurationFaculties = ['law', 'medicine'];
+            return longDurationFaculties.includes(facultyValue);
+        }
+
+        // Parse UG admission number and auto-detect level
+        function parseUGAndSetLevel(ugId, facultyValue) {
+            if (!ugId || ugId.trim() === "") return { valid: false, error: "Please enter your UG Student ID" };
+            
+            // Pattern: UG23/ASPA/1001 (UG + 2 digits year + / + dept code + / + 3-5 digit number)
+            const ugPattern = /^UG(\d{2})\/([A-Z0-9]{2,6})\/(\d{3,5})$/i;
+            const match = ugId.trim().toUpperCase().match(ugPattern);
+            
+            if (!match) {
+                return { valid: false, error: "Invalid UG format. Use UG(year)/dept/number (e.g., UG23/ASPA/1001)" };
+            }
+            
+            const yearTwoDigit = match[1]; // e.g., "23"
+            const deptCode = match[2];
+            const studentNumber = match[3];
+            
+            const currentYear = new Date().getFullYear();
+            const admissionYear = 2000 + parseInt(yearTwoDigit);
+            
+            // Validate year is reasonable (not before 2000 and not future beyond current year + 1)
+            if (admissionYear < 2000 || admissionYear > currentYear + 1) {
+                return { valid: false, error: `Invalid admission year (${admissionYear}). Please check your ID.` };
+            }
+            
+            let yearsElapsed = currentYear - admissionYear;
+            if (yearsElapsed < 0) yearsElapsed = 0;
+            
+            const isLongCourse = isLongDurationCourse(facultyValue);
+            const maxAllowedYears = isLongCourse ? 6 : 4;
+            const standardDuration = isLongCourse ? 5 : 4;
+            
+            // Check if student should have graduated already
+            if (yearsElapsed > maxAllowedYears) {
+                return { 
+                    valid: false, 
+                    error: `You were admitted in ${admissionYear} (${yearsElapsed} years ago). Based on your ${isLongCourse ? '5-6 year' : '4-year'} program, you should have graduated by now. Please contact support if this is an error.`
+                };
+            }
+            
+            // Determine current level based on years elapsed (1-based year of study)
+            let currentYearOfStudy = yearsElapsed + 1;
+            if (currentYearOfStudy > standardDuration) currentYearOfStudy = standardDuration;
+            if (currentYearOfStudy < 1) currentYearOfStudy = 1;
+            
+            let levelValue = "";
+            let levelText = "";
+            
+            if (currentYearOfStudy === 1) { levelValue = "100"; levelText = "100 Level (Freshman)"; }
+            else if (currentYearOfStudy === 2) { levelValue = "200"; levelText = "200 Level (Sophomore)"; }
+            else if (currentYearOfStudy === 3) { levelValue = "300"; levelText = "300 Level (Junior)"; }
+            else if (currentYearOfStudy === 4) { levelValue = "400"; levelText = "400 Level (Senior)"; }
+            else if (currentYearOfStudy === 5) { levelValue = "500"; levelText = "500 Level (Clinical/Advanced)"; }
+            else if (currentYearOfStudy === 6) { levelValue = "600"; levelText = "600 Level (Final Year Clinical)"; }
+            else { levelValue = "postgraduate"; levelText = "Postgraduate"; }
+            
+            return {
+                valid: true,
+                admissionYear,
+                yearsElapsed,
+                currentYearOfStudy,
+                levelValue,
+                levelText,
+                deptCode,
+                studentNumber,
+                isLongCourse,
+                message: `✅ Admitted: ${admissionYear} | ${yearsElapsed} year(s) completed | Current: ${levelText}`
+            };
+        }
+
+        // Auto-detect level when student ID or faculty changes
+        function autoDetectAndSetLevel() {
+            const ugId = studentIdInput.value;
+            const facultyValue = facultySelect.value;
+            
+            if (!ugId || ugId.trim() === "") {
+                levelAutoDetectMsg.innerHTML = "";
+                return;
+            }
+            
+            const result = parseUGAndSetLevel(ugId, facultyValue);
+            
+            if (!result.valid) {
+                levelAutoDetectMsg.innerHTML = `<span style="color:#D32F2F;">⚠️ ${result.error}</span>`;
+                return;
+            }
+            
+            // Auto-set the level dropdown if valid
+            if (result.valid && result.levelValue) {
+                let found = false;
+                for (let i = 0; i < levelSelect.options.length; i++) {
+                    if (levelSelect.options[i].value === result.levelValue) {
+                        levelSelect.selectedIndex = i;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found && result.levelValue === "500") {
+                    // Make sure 500 exists
+                    for (let i = 0; i < levelSelect.options.length; i++) {
+                        if (levelSelect.options[i].value === "500") {
+                            levelSelect.selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+                levelAutoDetectMsg.innerHTML = `<span style="color:#2E7D32;">${result.message}</span>`;
+                
+                // Final year warning
+                const finalYearValue = result.isLongCourse ? "500" : "400";
+                if (result.levelValue === finalYearValue) {
+                    levelAutoDetectMsg.innerHTML += `<br><span style="color:#E65100;">🎓 Final year student! Don't miss your graduation bonus offer.</span>`;
+                }
+            }
+        }
+
+        // Populate courses based on selected faculty - FULLY WORKING
+        function populateCourses() {
+            const selectedFaculty = facultySelect.value;
+            
+            // Clear current options
+            courseSelect.innerHTML = '<option value="">Select Course/Department</option>';
+            
+            if (selectedFaculty && gsuCourses[selectedFaculty] && gsuCourses[selectedFaculty].length > 0) {
+                const sortedCourses = [...gsuCourses[selectedFaculty]].sort();
+                for (let course of sortedCourses) {
+                    const option = document.createElement('option');
+                    option.value = course;
+                    option.textContent = course;
+                    courseSelect.appendChild(option);
+                }
+                courseSelect.disabled = false;
+            } else if (selectedFaculty && selectedFaculty !== "") {
+                // Fallback for any faculty not in mapping
+                const option = document.createElement('option');
+                option.value = "General Studies";
+                option.textContent = "General Studies";
+                courseSelect.appendChild(option);
+                courseSelect.disabled = false;
+            } else {
+                courseSelect.disabled = true;
+                courseSelect.innerHTML = '<option value="">Select Faculty First</option>';
+            }
+        }
+
+        // Event Listeners - FIXED ORDER
+        facultySelect.addEventListener('change', function() {
+            populateCourses();
+            // Clear course error if any
+            const courseError = document.getElementById('courseError');
+            if (courseError) courseError.classList.remove('active');
+            // Re-run level detection with new faculty
+            autoDetectAndSetLevel();
+        });
+        
+        studentIdInput.addEventListener('input', autoDetectAndSetLevel);
+        studentIdInput.addEventListener('blur', autoDetectAndSetLevel);
+
+        // Validation helpers
+        function showFieldError(fieldId, message) {
+            const field = document.getElementById(fieldId);
+            const errorEl = document.getElementById(fieldId + 'Error');
+            if (field) field.classList.add('error');
+            if (errorEl) { errorEl.textContent = message; errorEl.classList.add('active'); }
+        }
+
+        function validateFormExtended() {
+            let isValid = true;
+            document.querySelectorAll('.error-message').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.form-control').forEach(el => el.classList.remove('error'));
+            
+            const fullName = document.getElementById('fullName').value.trim();
+            if (!fullName) { showFieldError('fullName', 'Full name is required'); isValid = false; }
+            
+            const phone = document.getElementById('phoneNumber').value.trim();
+            const phoneDigits = phone.replace(/\D/g, '');
+            if (!phoneDigits || phoneDigits.length !== 11) { showFieldError('phoneNumber', 'Please enter a valid 11-digit phone number'); isValid = false; }
+            
+            const studentId = document.getElementById('studentId').value.trim();
+            const faculty = document.getElementById('faculty').value;
+            const ugValidation = parseUGAndSetLevel(studentId, faculty);
+            
+            if (!studentId) {
+                showFieldError('studentId', 'Please enter your UG Student ID (e.g., UG23/ASPA/1001)');
+                isValid = false;
+            } else if (!ugValidation.valid) {
+                showFieldError('studentId', ugValidation.error);
+                isValid = false;
+            }
+            
+            if (!faculty) { showFieldError('faculty', 'Please select your faculty'); isValid = false; }
+            
+            const course = document.getElementById('course').value;
+            if (!course || course === "") { showFieldError('course', 'Please select your course of study'); isValid = false; }
+            
+            const level = document.getElementById('level').value;
+            if (!level) { showFieldError('level', 'Please select your level'); isValid = false; }
+            
+            const email = document.getElementById('email').value.trim();
+            if (email && !/^\S+@\S+\.\S+$/.test(email)) { showFieldError('email', 'Please enter a valid email address'); isValid = false; }
+            
+            const password = document.getElementById('password').value;
+            if (password.length < 6) { showFieldError('password', 'Password must be at least 6 characters'); isValid = false; }
+            
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            if (confirmPassword !== password) { showFieldError('confirmPassword', 'Passwords do not match'); isValid = false; }
+            
+            const terms = document.getElementById('terms').checked;
+            if (!terms) { showFieldError('terms', 'You must agree to the terms'); isValid = false; }
+            
+            return isValid;
+        }
+
+        function showLoading(msg) { 
+            document.getElementById('loadingText').textContent = msg; 
+            document.getElementById('loadingOverlay').classList.add('active'); 
+        }
+        
+        function hideLoading() { 
+            document.getElementById('loadingOverlay').classList.remove('active'); 
+        }
+        
+        function showError(title, msg) { 
+            document.getElementById('errorTitle').textContent = title; 
+            document.getElementById('errorMessage').textContent = msg; 
+            document.getElementById('errorModal').classList.add('active'); 
+        }
+
+        // Form submission
+        document.getElementById('studentSignupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!validateFormExtended()) return;
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
+            showLoading('Creating your student account...');
+
+            try {
+                const fullName = document.getElementById('fullName').value.trim();
+                const phone = document.getElementById('phoneNumber').value.trim();
+                const studentId = document.getElementById('studentId').value.toUpperCase();
+                const faculty = document.getElementById('faculty').value;
+                const facultyName = facultySelect.options[facultySelect.selectedIndex]?.text || faculty;
+                const course = document.getElementById('course').value;
+                const level = document.getElementById('level').value;
+                const levelName = document.getElementById('level').options[document.getElementById('level').selectedIndex]?.text || level;
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+                const marketingConsent = document.getElementById('marketing').checked;
+                
+                // Parse UG to extract year info
+                const ugData = parseUGAndSetLevel(studentId, faculty);
+                const admissionYear = ugData.valid ? ugData.admissionYear : null;
+                const expectedGraduationYear = ugData.valid ? (ugData.isLongCourse ? admissionYear + 5 : admissionYear + 4) : null;
+
+                const studentlistRef = db.collection('studentlist');
+                const existingStudent = await studentlistRef.where('studentId', '==', studentId).get();
+                if (!existingStudent.empty) throw new Error('This student ID is already registered.');
+                
+                const existingPhone = await studentlistRef.where('phone', '==', phone).get();
+                if (!existingPhone.empty) throw new Error('This phone number is already registered.');
+
+                let userEmail = email;
+                if (!userEmail) userEmail = `${studentId.replace(/\//g, '_')}@tpot.student.local`;
+                
+                const authResult = await auth.createUserWithEmailAndPassword(userEmail, password);
+                const firebaseUser = authResult.user;
+                await firebaseUser.updateProfile({ displayName: fullName });
+                
+                if (email && email.includes('@')) {
+                    firebaseUser.sendEmailVerification().catch(e => console.warn("Email verification error:", e));
+                }
+
+                const studentDoc = {
+                    fullName, phone, email: email || null, studentId, faculty, facultyName, course, level, levelName,
+                    marketingConsent, termsAccepted: true, points: 500, bonusCredit: 500, totalSpent: 0, visitsCount: 0,
+                    authUID: firebaseUser.uid, registrationCompleted: true, accountVerified: false,
+                    admissionYear: admissionYear,
+                    expectedGraduationYear: expectedGraduationYear,
+                    programDuration: ugData.valid ? (ugData.isLongCourse ? 5 : 4) : 4,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    studentCode: `TPOT-${studentId.replace(/\//g, '-')}`
+                };
+                
+                await studentlistRef.add(studentDoc);
+                
+                localStorage.setItem('studentUID', firebaseUser.uid);
+                localStorage.setItem('studentData', JSON.stringify({ 
+                    fullName, studentId, phone, faculty: facultyName, course, level: levelName, points: 500, bonusCredit: 500 
+                }));
+                
+                if (analytics) analytics.logEvent('student_signup_completed', { student_id: studentId, faculty, course });
+                
+                hideLoading();
+                document.getElementById('successModal').classList.add('active');
+                document.getElementById('studentSignupForm').reset();
+                
+                // Reset course dropdown
+                courseSelect.innerHTML = '<option value="">Select Faculty First</option>';
+                courseSelect.disabled = true;
+                levelAutoDetectMsg.innerHTML = "";
+                
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Sign Up & Get ₦500 Bonus';
+            } catch (error) {
+                hideLoading();
+                let errorMsg = error.message || 'Registration failed. Please try again.';
+                if (error.code === 'auth/email-already-in-use') errorMsg = 'Email already registered. Please use a different email.';
+                else if (error.code === 'auth/weak-password') errorMsg = 'Password too weak. Use at least 6 characters.';
+                showError('Registration Failed', errorMsg);
+                document.getElementById('submitBtn').disabled = false;
+                document.getElementById('submitBtn').innerHTML = '<i class="fas fa-user-plus"></i> Sign Up & Get ₦500 Bonus';
+            }
+        });
+
+        // Modal handlers
+        document.getElementById('modalClose')?.addEventListener('click', () => document.getElementById('successModal').classList.remove('active'));
+        document.getElementById('continueBtn')?.addEventListener('click', () => { window.location.href = 'StudentProfile.html'; });
+        document.getElementById('errorModalClose')?.addEventListener('click', () => document.getElementById('errorModal').classList.remove('active'));
+        document.getElementById('errorOkBtn')?.addEventListener('click', () => document.getElementById('errorModal').classList.remove('active'));
+        
+        document.getElementById('termsLink')?.addEventListener('click', (e) => { e.preventDefault(); alert("T-POT Student Rewards Terms: Valid student ID required. One account per student. Bonuses subject to terms."); });
+        document.getElementById('privacyLink')?.addEventListener('click', (e) => { e.preventDefault(); alert("We protect your data. Student information is used only for rewards and order processing."); });
+        
+        document.getElementById('mobileMenuBtn')?.addEventListener('click', () => { document.getElementById('mainNav').classList.toggle('active'); });
+        
+        // Initialize - course dropdown starts disabled
+        courseSelect.disabled = true;
+        courseSelect.innerHTML = '<option value="">Select Faculty First</option>';
+    </script>
+</body>
+</html>

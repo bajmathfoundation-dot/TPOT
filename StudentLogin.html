@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T-POT & Snacks | Student Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #FFFBF5 0%, #F5EFE6 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Header Styles */
+        header {
+            background-color: #FFFBF5;
+            color: #8D6E63;
+            padding: 15px 0;
+            box-shadow: 0 4px 20px rgba(141, 110, 99, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(141, 110, 99, 0.1);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo-main {
+            font-size: 2.8rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #8D6E63;
+        }
+        
+        .logo-main .big-t {
+            font-size: 3.5rem;
+            color: #A1887F;
+            display: inline-block;
+        }
+        
+        .logo-sub {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #A1887F;
+            letter-spacing: 1.5px;
+            margin-top: -5px;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+        }
+        
+        nav a {
+            color: #8D6E63;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            padding: 8px 15px;
+            border-radius: 4px;
+        }
+        
+        nav a:hover, nav a.active {
+            color: #5D4037;
+            background-color: rgba(161, 136, 127, 0.2);
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: #8D6E63;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        /* Login Container */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex: 1;
+            padding: 60px 20px;
+        }
+        
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(141, 110, 99, 0.15);
+            max-width: 450px;
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .login-icon {
+            font-size: 4rem;
+            color: #A1887F;
+            margin-bottom: 20px;
+        }
+        
+        .login-card h1 {
+            color: #8D6E63;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .login-card p {
+            color: #5D4037;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #8D6E63;
+        }
+        
+        .input-group {
+            position: relative;
+        }
+        
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #D7CCC8;
+            font-size: 1.1rem;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 14px 15px 14px 45px;
+            border: 2px solid #F0E7DE;
+            border-radius: 10px;
+            font-size: 1rem;
+            background-color: #FFFBF5;
+            color: #5D4037;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: #A1887F;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(161, 136, 127, 0.1);
+        }
+        
+        .form-control.error {
+            border-color: #D32F2F;
+        }
+        
+        .error-message {
+            color: #D32F2F;
+            font-size: 0.8rem;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .error-message.active {
+            display: block;
+        }
+        
+        .forgot-link {
+            text-align: right;
+            margin-top: -10px;
+            margin-bottom: 20px;
+        }
+        
+        .forgot-link a {
+            color: #A1887F;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .forgot-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .login-btn {
+            background-color: #A1887F;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+        
+        .login-btn:hover {
+            background-color: #8D6E63;
+        }
+        
+        .login-btn:disabled {
+            background-color: #D7CCC8;
+            cursor: not-allowed;
+        }
+        
+        .signup-link {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #F0E7DE;
+        }
+        
+        .signup-link p {
+            margin-bottom: 0;
+            color: #8D6E63;
+        }
+        
+        .signup-link a {
+            color: #A1887F;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 251, 245, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        
+        .loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid #D7CCC8;
+            border-top: 5px solid #A1887F;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            color: #8D6E63;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(93, 64, 55, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+            padding: 20px;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal {
+            background-color: #FFFBF5;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 450px;
+            padding: 35px;
+            position: relative;
+            text-align: center;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #8D6E63;
+            cursor: pointer;
+        }
+        
+        .modal-icon {
+            font-size: 3.5rem;
+            color: #A1887F;
+            margin-bottom: 15px;
+        }
+        
+        .modal h2 {
+            color: #8D6E63;
+            margin-bottom: 15px;
+        }
+        
+        .modal p {
+            color: #5D4037;
+            margin-bottom: 25px;
+        }
+        
+        .modal-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #F0E7DE;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-size: 1rem;
+        }
+        
+        .modal-btn {
+            background-color: #A1887F;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .modal-btn:hover {
+            background-color: #8D6E63;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: #F5EFE6;
+            color: #5D4037;
+            padding: 30px 0 20px;
+            margin-top: auto;
+            border-top: 1px solid #D7CCC8;
+        }
+        
+        .copyright {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #8D6E63;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav ul {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background-color: #FFFBF5;
+                flex-direction: column;
+                padding: 20px;
+                text-align: center;
+                box-shadow: 0 10px 15px rgba(141, 110, 99, 0.1);
+                z-index: 100;
+                border-top: 1px solid rgba(141, 110, 99, 0.1);
+            }
+            
+            nav ul.active {
+                display: flex;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .login-card {
+                padding: 30px 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text" id="loadingText">Processing...</div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="container header-content">
+            <div class="logo">
+                <div class="logo-main"><span class="big-t">T</span>-POT</div>
+                <div class="logo-sub">& SNACKS</div>
+            </div>
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <nav>
+                <ul id="mainNav">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="gallery.html">Gallery</a></li>
+                    <li><a href="StudentLogin.html" class="active">Login</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Login Form -->
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-icon">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <h1>Student Login</h1>
+            <p>Welcome back! Login to access your rewards and benefits</p>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Email Address / Student ID</label>
+                    <div class="input-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="text" class="form-control" id="loginIdentifier" placeholder="Enter your email or student ID">
+                    </div>
+                    <div class="error-message" id="identifierError">Please enter your email or student ID</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" class="form-control" id="password" placeholder="Enter your password">
+                    </div>
+                    <div class="error-message" id="passwordError">Please enter your password</div>
+                </div>
+                
+                <div class="forgot-link">
+                    <a href="#" id="forgotPasswordLink">Forgot Password?</a>
+                </div>
+                
+                <button type="submit" class="login-btn" id="loginBtn">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+            </form>
+            
+            <div class="signup-link">
+                <p>Don't have an account? <a href="StudentSignUp.html">Sign Up Now</a></p>
+                <p style="font-size: 0.8rem; margin-top: 10px;">Get ₦500 bonus as 500 points on sign up!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div class="modal-overlay" id="forgotPasswordModal">
+        <div class="modal">
+            <button class="modal-close" id="forgotModalClose">&times;</button>
+            <div class="modal-icon">
+                <i class="fas fa-key"></i>
+            </div>
+            <h2>Reset Password</h2>
+            <p>Enter your email address and we'll send you a link to reset your password.</p>
+            <input type="email" class="modal-input" id="resetEmail" placeholder="Enter your email address">
+            <button class="modal-btn" id="sendResetBtn">Send Reset Link</button>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal-overlay" id="successModal">
+        <div class="modal">
+            <button class="modal-close" id="successModalClose">&times;</button>
+            <div class="modal-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h2>Check Your Email</h2>
+            <p>We've sent a password reset link to your email address. Please check your inbox and follow the instructions.</p>
+            <button class="modal-btn" id="successOkBtn">OK</button>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div class="modal-overlay" id="errorModal">
+        <div class="modal">
+            <button class="modal-close" id="errorModalClose">&times;</button>
+            <div class="modal-icon">
+                <i class="fas fa-exclamation-circle"></i>
+            </div>
+            <h2 id="errorTitle">Error</h2>
+            <p id="errorMessage">Something went wrong. Please try again.</p>
+            <button class="modal-btn" id="errorOkBtn">OK</button>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="copyright">
+                <p>&copy; 2026 T-POT & SNACKS Restaurant. All rights reserved. | Student Rewards Program</p>
+                <p style="margin-top: 10px; font-size: 0.8rem;">Login to access your points, discounts, and exclusive student benefits</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDRKWldl8_NSAek4na-H-SQWjUBrxt26iI",
+            authDomain: "tpot.com.ng",
+            projectId: "t-pot-60c3d",
+            storageBucket: "t-pot-60c3d.firebasestorage.app",
+            messagingSenderId: "272048176539",
+            appId: "1:272048176539:web:d73d09a39171c8ef12753e",
+            measurementId: "G-VLSBVKXPXP"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM Elements
+        const form = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginIdentifier = document.getElementById('loginIdentifier');
+        const passwordInput = document.getElementById('password');
+        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+        const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+        const forgotModalClose = document.getElementById('forgotModalClose');
+        const sendResetBtn = document.getElementById('sendResetBtn');
+        const resetEmail = document.getElementById('resetEmail');
+        const successModal = document.getElementById('successModal');
+        const successModalClose = document.getElementById('successModalClose');
+        const successOkBtn = document.getElementById('successOkBtn');
+        const errorModal = document.getElementById('errorModal');
+        const errorModalClose = document.getElementById('errorModalClose');
+        const errorOkBtn = document.getElementById('errorOkBtn');
+        const errorTitle = document.getElementById('errorTitle');
+        const errorMessage = document.getElementById('errorMessage');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingText = document.getElementById('loadingText');
+
+        // Helper functions
+        function showLoading(message = 'Processing...') {
+            loadingText.textContent = message;
+            loadingOverlay.classList.add('active');
+        }
+        
+        function hideLoading() {
+            loadingOverlay.classList.remove('active');
+        }
+        
+        function showErrorModal(title, message) {
+            errorTitle.textContent = title;
+            errorMessage.textContent = message;
+            errorModal.classList.add('active');
+        }
+        
+        function showSuccessModal() {
+            successModal.classList.add('active');
+        }
+        
+        function clearErrors() {
+            document.querySelectorAll('.error-message').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.form-control').forEach(el => el.classList.remove('error'));
+        }
+        
+        function showFieldError(fieldId, message) {
+            const field = document.getElementById(fieldId);
+            const errorElement = document.getElementById(fieldId + 'Error');
+            if (field) field.classList.add('error');
+            if (errorElement) {
+                errorElement.textContent = message;
+                errorElement.classList.add('active');
+            }
+        }
+        
+        // Validate form
+        function validateForm() {
+            clearErrors();
+            let isValid = true;
+            
+            const identifier = loginIdentifier.value.trim();
+            if (!identifier) {
+                showFieldError('loginIdentifier', 'Please enter your email or student ID');
+                isValid = false;
+            }
+            
+            const password = passwordInput.value;
+            if (!password) {
+                showFieldError('password', 'Please enter your password');
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+        
+        // Find student by student ID to get email for login
+        async function findStudentByStudentId(studentId) {
+            try {
+                const studentlistRef = db.collection('studentlist');
+                const querySnapshot = await studentlistRef.where('studentId', '==', studentId.toUpperCase()).get();
+                
+                if (!querySnapshot.empty) {
+                    const studentData = querySnapshot.docs[0].data();
+                    return studentData.email || null;
+                }
+                return null;
+            } catch (error) {
+                console.error('Error finding student:', error);
+                return null;
+            }
+        }
+        
+        // Handle login
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            if (!validateForm()) {
+                return;
+            }
+            
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+            showLoading('Verifying credentials...');
+            
+            try {
+                let identifier = loginIdentifier.value.trim();
+                let email = identifier;
+                
+                // Check if identifier is a student ID (format GSU/XXXX/XXX)
+                const studentIdRegex = /^GSU\/\d{4}\/\d{3}$/i;
+                if (studentIdRegex.test(identifier)) {
+                    showLoading('Looking up student record...');
+                    const foundEmail = await findStudentByStudentId(identifier);
+                    if (foundEmail) {
+                        email = foundEmail;
+                    } else {
+                        throw new Error('Student ID not found. Please register first.');
+                    }
+                } else if (!identifier.includes('@')) {
+                    // If not email format and not student ID format
+                    throw new Error('Please enter a valid email address or student ID (GSU/XXXX/XXX)');
+                }
+                
+                // Attempt sign in
+                const password = passwordInput.value;
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // Verify student exists in studentlist collection
+                const studentlistRef = db.collection('studentlist');
+                const studentQuery = await studentlistRef.where('authUID', '==', user.uid).get();
+                
+                if (studentQuery.empty) {
+                    // If student not found in studentlist but auth exists, sign out
+                    await auth.signOut();
+                    throw new Error('Student record not found. Please sign up again.');
+                }
+                
+                // Update last login time
+                const studentDoc = studentQuery.docs[0];
+                await studentDoc.ref.update({
+                    lastLoginAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                console.log('Login successful for:', user.email);
+                
+                hideLoading();
+                
+                // Redirect to profile page
+                window.location.href = 'StudentProfile.html';
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                hideLoading();
+                
+                let errorMsg = 'Invalid email/student ID or password. Please try again.';
+                
+                if (error.code === 'auth/user-not-found') {
+                    errorMsg = 'No account found with this email/student ID. Please sign up first.';
+                } else if (error.code === 'auth/wrong-password') {
+                    errorMsg = 'Incorrect password. Please try again.';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMsg = 'Invalid email format. Please enter a valid email address.';
+                } else if (error.code === 'auth/too-many-requests') {
+                    errorMsg = 'Too many failed login attempts. Please try again later or reset your password.';
+                } else if (error.message) {
+                    errorMsg = error.message;
+                }
+                
+                showErrorModal('Login Failed', errorMsg);
+                
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+            }
+        }
+        
+        // Forgot password - send reset email
+        async function handleForgotPassword() {
+            const email = resetEmail.value.trim();
+            
+            if (!email) {
+                showErrorModal('Email Required', 'Please enter your email address to reset your password.');
+                return;
+            }
+            
+            if (!/^\S+@\S+\.\S+$/.test(email)) {
+                showErrorModal('Invalid Email', 'Please enter a valid email address.');
+                return;
+            }
+            
+            sendResetBtn.disabled = true;
+            sendResetBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            showLoading('Sending reset link...');
+            
+            try {
+                await auth.sendPasswordResetEmail(email);
+                hideLoading();
+                forgotPasswordModal.classList.remove('active');
+                showSuccessModal();
+                
+                // Reset form
+                resetEmail.value = '';
+                
+            } catch (error) {
+                console.error('Password reset error:', error);
+                hideLoading();
+                
+                let errorMsg = 'Unable to send reset email. Please check your email address.';
+                if (error.code === 'auth/user-not-found') {
+                    errorMsg = 'No account found with this email address. Please sign up first.';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMsg = 'Invalid email address format.';
+                }
+                
+                showErrorModal('Reset Failed', errorMsg);
+            } finally {
+                sendResetBtn.disabled = false;
+                sendResetBtn.innerHTML = 'Send Reset Link';
+            }
+        }
+        
+        // Check if user is already logged in
+        function checkAuthState() {
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    // User is already logged in, redirect to profile
+                    console.log('User already logged in:', user.email);
+                    window.location.href = 'StudentProfile.html';
+                }
+            });
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            form.addEventListener('submit', handleLogin);
+            
+            // Forgot password modal
+            forgotPasswordLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                resetEmail.value = '';
+                forgotPasswordModal.classList.add('active');
+            });
+            
+            forgotModalClose.addEventListener('click', () => {
+                forgotPasswordModal.classList.remove('active');
+            });
+            
+            sendResetBtn.addEventListener('click', handleForgotPassword);
+            
+            // Close modal on outside click
+            forgotPasswordModal.addEventListener('click', (e) => {
+                if (e.target === forgotPasswordModal) {
+                    forgotPasswordModal.classList.remove('active');
+                }
+            });
+            
+            // Success modal handlers
+            successModalClose.addEventListener('click', () => {
+                successModal.classList.remove('active');
+            });
+            
+            successOkBtn.addEventListener('click', () => {
+                successModal.classList.remove('active');
+            });
+            
+            successModal.addEventListener('click', (e) => {
+                if (e.target === successModal) {
+                    successModal.classList.remove('active');
+                }
+            });
+            
+            // Error modal handlers
+            errorModalClose.addEventListener('click', () => {
+                errorModal.classList.remove('active');
+            });
+            
+            errorOkBtn.addEventListener('click', () => {
+                errorModal.classList.remove('active');
+            });
+            
+            errorModal.addEventListener('click', (e) => {
+                if (e.target === errorModal) {
+                    errorModal.classList.remove('active');
+                }
+            });
+            
+            // Enter key in reset email input
+            resetEmail.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleForgotPassword();
+                }
+            });
+            
+            // Mobile menu
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mainNav = document.getElementById('mainNav');
+            
+            if (mobileMenuBtn && mainNav) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    mainNav.classList.toggle('active');
+                    mobileMenuBtn.innerHTML = mainNav.classList.contains('active') 
+                        ? '<i class="fas fa-times"></i>' 
+                        : '<i class="fas fa-bars"></i>';
+                });
+                
+                const navLinks = document.querySelectorAll('nav a');
+                navLinks.forEach(link => {
+                    link.addEventListener('click', () => {
+                        mainNav.classList.remove('active');
+                        mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
+                    });
+                });
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            checkAuthState();
+        });
+    </script>
+</body>
+</html>

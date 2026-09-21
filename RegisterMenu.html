@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T-POT & SNACKS | Menu Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', sans-serif; }
+        body {
+            background: #FFFBF5;
+            color: #5D4037;
+        }
+        .container { max-width: 900px; margin: 40px auto; padding: 20px; }
+        header {
+            background: #8D6E63; color: white; padding: 15px 0; text-align: center;
+        }
+        .logo-main { font-size: 2.8rem; font-weight: 900; }
+        .logo-main .big-t { color: #FFD700; font-size: 3.5rem; }
+        
+        .admin-card {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        h2 { text-align: center; color: #8D6E63; margin-bottom: 30px; }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #D7CCC8;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #8D6E63; }
+        .btn {
+            background: #8D6E63;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .btn:hover { background: #5D4037; }
+        .success { color: #2E7D32; text-align: center; margin-top: 15px; font-weight: bold; }
+        
+        /* Days checkboxes group */
+        .days-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 10px 0;
+        }
+        .days-group label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: normal;
+            cursor: pointer;
+        }
+        .days-group input {
+            width: auto;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo-main"><span class="big-t">T</span>-POT &amp; SNACKS <span style="font-size:1.2rem;">ADMIN</span></div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="admin-card">
+            <h2>Add New Menu Item</h2>
+            <form id="menuForm">
+                <div class="form-grid">
+                    <div><label>Name</label><input type="text" id="name" required></div>
+                    <div><label>Price (e.g. ₦1,500)</label><input type="text" id="price" required></div>
+                    <div><label>Category</label>
+                        <select id="category" required>
+                            <option value="signature">Signature</option>
+                            <option value="snacks">Snacks</option>
+                            <option value="main">Main Courses</option>
+							<option value="Tea">Tea</option>
+                            <option value="soups">Soups</option>
+                            <option value="drinks">Drinks</option>
+                        </select>
+                    </div>
+                    <div><label>Image URL</label><input type="text" id="image" placeholder="https://... or local filename" required></div>
+                    <div><label>Serving Size</label><input type="text" id="serving" placeholder="1-2 persons"></div>
+                    
+                    <!-- Prep Time as SELECTION (Dropdown) -->
+                    <div><label>Prep Time</label>
+                        <select id="prepTime">
+                            <option value="10-15 mins">10-15 mins</option>
+                            <option value="15-20 mins" selected>15-20 mins</option>
+                            <option value="20-30 mins">20-30 mins</option>
+                            <option value="30-45 mins">30-45 mins</option>
+                            <option value="45-60 mins">45-60 mins</option>
+                        </select>
+                    </div>
+                    
+                    <div><label>Spice Level</label>
+                        <select id="spiceLevel">
+                            <option value="None">None</option>
+                            <option value="Mild">Mild</option>
+                            <option value="Medium" selected>Medium</option>
+                            <option value="Hot">Hot</option>
+                        </select>
+                    </div>
+                    <div><label>Popularity</label><input type="text" id="popularity" value="★★★★☆"></div>
+                    
+                    <!-- Days Available as CHECKBOX GROUP (Multi-select) -->
+                    <div><label>Days Available</label>
+                        <div class="days-group" id="daysGroup">
+                            <label><input type="checkbox" value="Monday"> Mon</label>
+                            <label><input type="checkbox" value="Tuesday"> Tue</label>
+                            <label><input type="checkbox" value="Wednesday"> Wed</label>
+                            <label><input type="checkbox" value="Thursday"> Thu</label>
+                            <label><input type="checkbox" value="Friday"> Fri</label>
+                            <label><input type="checkbox" value="Saturday"> Sat</label>
+                            <label><input type="checkbox" value="Sunday"> Sun</label>
+                        </div>
+                    </div>
+                    
+                    <!-- Order Time (kept as input for flexibility) -->
+                    <div><label>Order Time</label><input type="text" id="orderTime" placeholder="e.g., 8:00 AM - 10:00 PM"></div>
+                    
+                    <div><label>Tags (comma separated)</label><input type="text" id="tags" placeholder="Spicy,Popular,Best Seller"></div>
+                </div>
+                <div style="margin-top:20px;">
+                    <label>Description</label>
+                    <textarea id="description" rows="4" style="width:100%;" required></textarea>
+                </div>
+                <div style="margin-top:15px;">
+                    <label><input type="checkbox" id="available" checked> Available Today</label>
+                </div>
+
+                <button type="submit" class="btn">SAVE TO DATABASE</button>
+                <button type="button" id="seedBtn" class="btn" style="background:#A1887F; margin-left:10px;">Seed Sample Data</button>
+            </form>
+            <p id="status" class="success"></p>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDRKWldl8_NSAek4na-H-SQWjUBrxt26iI",
+            authDomain: "tpot.com.ng",
+            projectId: "t-pot-60c3d",
+            storageBucket: "t-pot-60c3d.firebasestorage.app",
+            messagingSenderId: "272048176539",
+            appId: "1:272048176539:web:d73d09a39171c8ef12753e"
+        };
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        const form = document.getElementById('menuForm');
+        const status = document.getElementById('status');
+
+        // Helper: Get selected days from checkboxes
+        function getSelectedDays() {
+            const checkboxes = document.querySelectorAll('#daysGroup input[type="checkbox"]:checked');
+            const days = Array.from(checkboxes).map(cb => cb.value);
+            return days.length > 0 ? days.join(', ') : 'Mon-Sun';
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            status.textContent = 'Saving...';
+
+            const tags = document.getElementById('tags').value.split(',').map(t => t.trim()).filter(t => t);
+            const selectedDays = getSelectedDays();
+
+            const newItem = {
+                name: document.getElementById('name').value,
+                price: document.getElementById('price').value,
+                description: document.getElementById('description').value,
+                image: document.getElementById('image').value,
+                category: document.getElementById('category').value,
+                tags: tags,
+                date: new Date().toISOString().split('T')[0],
+                available: document.getElementById('available').checked,
+                serving: document.getElementById('serving').value || "1 person",
+                prepTime: document.getElementById('prepTime').value,
+                popularity: document.getElementById('popularity').value,
+                spiceLevel: document.getElementById('spiceLevel').value,
+                daysAvailable: selectedDays,
+                orderTime: document.getElementById('orderTime').value || "8:00 AM - 10:00 PM"
+            };
+
+            try {
+                await db.collection("menuItems").add(newItem);
+                status.textContent = "✅ Item saved successfully!";
+                form.reset();
+                // uncheck all days after reset
+                document.querySelectorAll('#daysGroup input').forEach(cb => cb.checked = false);
+            } catch (error) {
+                status.textContent = "❌ Error: " + error.message;
+            }
+        });
+
+        // Seed sample data
+        document.getElementById('seedBtn').addEventListener('click', async () => {
+            if (!confirm('This will add sample menu items. Continue?')) return;
+            status.textContent = 'Seeding database...';
+            
+            const sampleItems = [
+                { name: "Signature Kibabs", price: "₦2,500", category: "signature", description: "Tender beef skewers with special spices", image: "meat kibab.jpg", tags: ["Popular","Spicy"], serving: "1 person", prepTime: "15-20 mins", popularity: "★★★★★", spiceLevel: "Medium", daysAvailable: "Mon, Tue, Wed, Thu, Fri, Sat", orderTime: "4:00 PM - 10:00 PM", available: true, date: "2026-01-01" },
+                { name: "Pounded Yam", price: "₦3,000", category: "main", description: "Served with egusi or vegetable soup", image: "sakora&agushi.jpg", tags: ["Best Seller","Traditional"], serving: "2 persons", prepTime: "20-30 mins", popularity: "★★★★★", spiceLevel: "Mild", daysAvailable: "Mon-Sun", orderTime: "11:00 AM - 9:00 PM", available: true, date: "2026-01-01" },
+                { name: "Pepper Soup", price: "₦2,000", category: "soups", description: "Spicy cow leg pepper soup", image: "kayan ciki.jpg", tags: ["Hot","Spicy"], serving: "1 person", prepTime: "15-20 mins", popularity: "★★★★☆", spiceLevel: "Hot", daysAvailable: "Fri, Sat, Sun", orderTime: "6:00 PM - 11:00 PM", available: true, date: "2026-01-01" },
+				{ name: "Tea", price: "₦2,000", category: "Tea", description: "Spicy cow leg pepper soup", image: "kayan ciki.jpg", tags: ["Hot","Spicy"], serving: "1 person", prepTime: "15-20 mins", popularity: "★★★★☆", spiceLevel: "Hot", daysAvailable: "Fri, Sat, Sun", orderTime: "6:00 PM - 11:00 PM", available: true, date: "2026-01-01" },
+                { name: "Loaded Chips", price: "₦1,800", category: "snacks", description: "Crispy chips with cheese and beef", image: "loadedchips.jpg", tags: ["Snack","Cheesy"], serving: "1 person", prepTime: "10-15 mins", popularity: "★★★★☆", spiceLevel: "Mild", daysAvailable: "Mon-Sun", orderTime: "12:00 PM - 9:00 PM", available: true, date: "2026-01-01" },
+                { name: "Special Rice", price: "₦2,800", category: "main", description: "Spiced rice with grilled chicken", image: "rices and stew.jpg", tags: ["Popular"], serving: "1-2 persons", prepTime: "20-30 mins", popularity: "★★★★★", spiceLevel: "Medium", daysAvailable: "Mon-Sun", orderTime: "11:00 AM - 9:00 PM", available: true, date: "2026-01-01" },
+                { name: "Masa & Cowleg", price: "₦2,500", category: "signature", description: "Rice cakes with rich cow leg soup", image: "masa&cowleg.jpg", tags: ["Traditional","Best Seller"], serving: "2 persons", prepTime: "25-35 mins", popularity: "★★★★★", spiceLevel: "Medium", daysAvailable: "Fri, Sat, Sun", orderTime: "5:00 PM - 10:00 PM", available: true, date: "2026-01-01" }
+            ];
+            
+            for (let item of sampleItems) {
+                await db.collection("menuItems").add(item);
+            }
+            status.textContent = "✅ Sample items added!";
+        });
+    </script>
+</body>
+</html>

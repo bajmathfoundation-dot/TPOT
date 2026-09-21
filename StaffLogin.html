@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T-POT & SNACKS | Staff Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body {
+            background: linear-gradient(rgba(139,69,19,0.95), rgba(139,69,19,0.95)), 
+                        url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80');
+            background-size: cover;
+            background-position: center;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .login-card {
+            background: rgba(255,255,255,0.95);
+            padding: 40px 35px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            color: #333;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo-main {
+            font-size: 3.2rem;
+            font-weight: 900;
+            color: #8b4513;
+        }
+        .logo-main .big-t { color: #ffd700; font-size: 3.8rem; }
+        h2 {
+            text-align: center;
+            color: #8b4513;
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #8b4513;
+        }
+        input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            transition: all 0.3s;
+        }
+        input:focus {
+            border-color: #8b4513;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(139,69,19,0.2);
+        }
+        .btn {
+            width: 100%;
+            background: #8b4513;
+            color: white;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            background: #a0522d;
+            transform: translateY(-3px);
+        }
+        .back-link {
+            text-align: center;
+            margin-top: 25px;
+            display: block;
+            color: #8b4513;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .back-link:hover { text-decoration: underline; }
+        .error {
+            color: #d32f2f;
+            text-align: center;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <div class="logo">
+            <div class="logo-main"><span class="big-t">T</span>-POT <span style="font-size:1.4rem; color:#ffd700;">&amp; SNACKS</span></div>
+        </div>
+        <h2>Staff Login</h2>
+
+        <form id="loginForm">
+            <div class="input-group">
+                <label>Username</label>
+                <input type="text" id="username" placeholder="" required autocomplete="off">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="Enter password" required>
+            </div>
+
+            <button type="submit" class="btn">LOGIN</button>
+        </form>
+
+        <p id="errorMsg" class="error"></p>
+
+        <a href="index.html" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Main Website
+        </a>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const errorMsg = document.getElementById('errorMsg');
+
+        // Hardcoded workers (username → redirect page)
+        const workers = {
+            "Khalid": "khalid.html",
+            "Mahir": "mahir.html",
+            "Muhammad": "muhammad.html",
+            "Jalo": "T-POTAdmin.html"
+        };
+
+        const correctPassword = "tpot123";   // ← Change this if you want
+
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            errorMsg.textContent = '';
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (!workers[username]) {
+                errorMsg.textContent = "❌ Username not recognized";
+                return;
+            }
+
+            if (password !== correctPassword) {
+                errorMsg.textContent = "❌ Wrong password";
+                return;
+            }
+
+            // SUCCESS → redirect to worker's own page
+            window.location.href = workers[username];
+        });
+    </script>
+</body>
+</html>

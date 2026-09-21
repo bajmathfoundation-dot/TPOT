@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T-POT & SNACKS | Record Outstanding Payment</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+  body { background: #FFFBF5; color: #4E342E; padding-bottom: 40px; }
+  header { background: #8D6E63; color: white; padding: 20px 0; text-align: center; }
+  .logo { font-size: 1.8rem; font-weight: 800; }
+  .logo .big-t { color: #FFD966; font-size: 2.4rem; }
+  .container { max-width: 900px; margin: 25px auto; padding: 0 20px; }
+  .card { background: white; border-radius: 18px; padding: 24px; box-shadow: 0 6px 18px rgba(0,0,0,0.08); margin-bottom: 20px; }
+  .card h2 { color: #8D6E63; margin-bottom: 18px; border-left: 5px solid #FFD966; padding-left: 12px; font-size: 1.15rem; }
+  label { display: block; font-weight: 600; margin: 12px 0 6px; color: #5D4037; font-size: 0.9rem; }
+  input, select { width: 100%; padding: 11px 14px; border: 2px solid #E0CFC9; border-radius: 10px; font-size: 1rem; outline: none; background: #FFFBF5; }
+  input:focus, select:focus { border-color: #8D6E63; }
+  .btn { padding: 12px 24px; border: none; border-radius: 30px; font-size: 0.95rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
+  .btn-primary { background: #1565C0; color: white; }
+  .btn-primary:hover { background: #0D47A1; }
+  .btn-success { background: #2E7D32; color: white; }
+  .btn-success:hover { background: #1B5E20; }
+  .btn-secondary { background: #E0CFC9; color: #4E342E; }
+  .btn-secondary:hover { background: #C9B5AE; }
+  .btn-danger { background: #D32F2F; color: white; }
+  .btn-danger:hover { background: #B71C1C; }
+  .item-row { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; align-items: end; margin-bottom: 10px; padding: 12px; background: #F9F3EA; border-radius: 12px; }
+  .item-row .field label { margin-top: 0; }
+  .item-row .amount { font-weight: 700; color: #2E7D32; padding: 11px 0; }
+  .icon-btn { background: #D32F2F; color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1rem; }
+  .icon-btn:hover { background: #B71C1C; }
+  .total-box { background: #E8F5E9; border-left: 5px solid #2E7D32; padding: 18px; border-radius: 12px; margin-top: 18px; display: flex; justify-content: space-between; align-items: center; }
+  .total-box .label { font-size: 1rem; font-weight: 600; }
+  .total-box .amount { font-size: 1.8rem; font-weight: 800; color: #2E7D32; }
+  .msg { padding: 14px 18px; border-radius: 12px; margin-top: 15px; font-weight: 600; }
+  .msg.success { background: #E8F5E9; color: #2E7D32; border-left: 5px solid #2E7D32; }
+  .msg.error { background: #FFEBEE; color: #C62828; border-left: 5px solid #D32F2F; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+  .topbar a { color: #8D6E63; text-decoration: none; font-weight: 600; padding: 8px 16px; border-radius: 20px; background: #F5EFE6; }
+  .topbar a:hover { background: #E0CFC9; }
+  @media (max-width: 700px) {
+    .item-row { grid-template-columns: 1fr; }
+    .item-row .icon-btn { width: 100%; border-radius: 10px; height: 44px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <div class="logo"><span class="big-t">T</span>-POT & SNACKS <span style="font-size:1rem;">• OUTSTANDING PAYMENT</span></div>
+    <p>Record a customer's unpaid balance</p>
+  </div>
+</header>
+
+<div class="container">
+  <div class="topbar">
+    <a href="OutstandingPaymentSettlement.html"><i class="fas fa-money-bill-wave"></i> Settle Payments</a>
+    <a href="ProfitLossDashboard.html"><i class="fas fa-chart-line"></i> Dashboard</a>
+  </div>
+
+  <div class="card">
+    <h2><i class="fas fa-user"></i> Customer & Items</h2>
+
+    <label>Customer Name <span style="color:#D32F2F;">*</span></label>
+    <input type="text" id="customerName" placeholder="e.g. Mrs. Adebayo" list="customerList">
+    <datalist id="customerList"></datalist>
+
+    <label style="margin-top:20px;">Items Owed</label>
+    <div id="itemsContainer"></div>
+    <button class="btn btn-secondary" id="addItemBtn" style="margin-top:8px;">
+      <i class="fas fa-plus"></i> Add Another Item
+    </button>
+
+    <div class="total-box">
+      <div class="label">Total Outstanding</div>
+      <div class="amount" id="totalAmount">₦0</div>
+    </div>
+
+    <div id="msg"></div>
+
+    <div class="actions">
+      <button class="btn btn-success" id="saveBtn"><i class="fas fa-save"></i> Save Outstanding</button>
+      <button class="btn btn-secondary" id="clearBtn"><i class="fas fa-eraser"></i> Clear Form</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDRKWldl8_NSAek4na-H-SQWjUBrxt26iI",
+  authDomain: "tpot.com.ng",
+  projectId: "t-pot-60c3d",
+  storageBucket: "t-pot-60c3d.firebasestorage.app",
+  messagingSenderId: "272048176539",
+  appId: "1:272048176539:web:d73d09a39171c8ef12753e"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const itemsContainer = document.getElementById('itemsContainer');
+const msgEl = document.getElementById('msg');
+const totalEl = document.getElementById('totalAmount');
+
+let menuItems = [];      // [{id, name, price}]
+let customersSet = new Set();
+
+// ---------- Load menu + customers ----------
+async function loadData() {
+  try {
+    const snap = await db.collection('menuItems').get();
+    menuItems = snap.docs.map(d => {
+      const v = d.data();
+      return {
+        id: d.id,
+        name: v.name || v.itemName || 'Unnamed',
+        price: Number(v.price || v.sellingPrice || v.unitPrice || 0)
+      };
+    }).filter(m => m.name);
+
+    // Customers from existing outstanding records
+    const custSnap = await db.collection('outstandingbalance').get();
+    custSnap.forEach(doc => {
+      const d = doc.data();
+      if (d.customerName) customersSet.add(d.customerName);
+    });
+    const dl = document.getElementById('customerList');
+    dl.innerHTML = [...customersSet].sort().map(c => `<option value="${c}">`).join('');
+
+    if (menuItems.length === 0) {
+      msgEl.innerHTML = '<div class="msg error">No menu items found. Add items to your menu first.</div>';
+    }
+
+    addItemRow(); // start with one row
+  } catch (err) {
+    msgEl.innerHTML = `<div class="msg error">Failed to load data: ${err.message}</div>`;
+  }
+}
+
+// ---------- Item row ----------
+function addItemRow() {
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  row.innerHTML = `
+    <div class="field">
+      <label>Item</label>
+      <select class="item-select">
+        <option value="">— Select item —</option>
+        ${menuItems.map(m => `<option value="${m.id}" data-price="${m.price}" data-name="${m.name.replace(/"/g,'&quot;')}">
+          ${m.name} (₦${m.price.toLocaleString()})
+        </option>`).join('')}
+      </select>
+    </div>
+    <div class="field">
+      <label>Unit Price</label>
+      <input type="text" class="unit-price" value="0" readonly style="background:#EFE7DD;">
+    </div>
+    <div class="field">
+      <label>Quantity</label>
+      <input type="number" class="qty" min="1" value="1">
+    </div>
+    <button class="icon-btn" title="Remove"><i class="fas fa-times"></i></button>
+  `;
+
+  const sel = row.querySelector('.item-select');
+  const unitPrice = row.querySelector('.unit-price');
+  const qty = row.querySelector('.qty');
+  const removeBtn = row.querySelector('.icon-btn');
+
+  sel.addEventListener('change', () => {
+    const opt = sel.selectedOptions[0];
+    const price = opt ? Number(opt.dataset.price || 0) : 0;
+    unitPrice.value = price.toLocaleString();
+    recalc();
+  });
+  qty.addEventListener('input', recalc);
+  removeBtn.addEventListener('click', () => {
+    row.remove();
+    if (!itemsContainer.children.length) addItemRow();
+    recalc();
+  });
+
+  itemsContainer.appendChild(row);
+  recalc();
+}
+
+function recalc() {
+  let total = 0;
+  itemsContainer.querySelectorAll('.item-row').forEach(row => {
+    const sel = row.querySelector('.item-select');
+    const opt = sel.selectedOptions[0];
+    const price = opt ? Number(opt.dataset.price || 0) : 0;
+    const qty = Number(row.querySelector('.qty').value || 0);
+    total += price * qty;
+  });
+  totalEl.textContent = '₦' + total.toLocaleString();
+}
+
+// ---------- Collect items from rows ----------
+function collectItems() {
+  const items = [];
+  itemsContainer.querySelectorAll('.item-row').forEach(row => {
+    const sel = row.querySelector('.item-select');
+    const opt = sel.selectedOptions[0];
+    const id = sel.value;
+    if (!id) return;
+    const name = opt.dataset.name;
+    const price = Number(opt.dataset.price || 0);
+    const qty = Number(row.querySelector('.qty').value || 0);
+    if (qty <= 0) return;
+    items.push({ itemId: id, itemName: name, unitPrice: price, quantity: qty, amount: price * qty });
+  });
+  return items;
+}
+
+// ---------- Save ----------
+async function saveOutstanding() {
+  msgEl.innerHTML = '';
+  const customerName = document.getElementById('customerName').value.trim();
+  const items = collectItems();
+
+  if (!customerName) return showMsg('Please enter the customer name.', 'error');
+  if (!items.length) return showMsg('Please add at least one item with a quantity.', 'error');
+
+  const totalAmount = items.reduce((s, i) => s + i.amount, 0);
+  const now = new Date();
+  const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
+
+  const record = {
+    customerName,
+    items,
+    totalAmount,
+    amountPaid: 0,
+    balance: totalAmount,
+    debtDate: dateStr,
+    debtDateTime: firebase.firestore.FieldValue.serverTimestamp(),
+    status: 'unpaid',
+    paymentHistory: [],
+    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  try {
+    document.getElementById('saveBtn').disabled = true;
+    const ref = await db.collection('outstandingbalance').add(record);
+    showMsg(`✅ Saved! Outstanding of ₦${totalAmount.toLocaleString()} recorded for ${customerName}. (Ref: ${ref.id})`, 'success');
+    setTimeout(clearForm, 1800);
+  } catch (err) {
+    showMsg('❌ Save failed: ' + err.message, 'error');
+  } finally {
+    document.getElementById('saveBtn').disabled = false;
+  }
+}
+
+function showMsg(text, type) {
+  msgEl.innerHTML = `<div class="msg ${type}">${text}</div>`;
+}
+
+function clearForm() {
+  document.getElementById('customerName').value = '';
+  itemsContainer.innerHTML = '';
+  addItemRow();
+  msgEl.innerHTML = '';
+  recalc();
+}
+
+// ---------- Wire up ----------
+document.getElementById('addItemBtn').addEventListener('click', addItemRow);
+document.getElementById('saveBtn').addEventListener('click', saveOutstanding);
+document.getElementById('clearBtn').addEventListener('click', clearForm);
+
+loadData();
+</script>
+</body>
+</html>

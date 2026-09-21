@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin | T-POT Last Battle - Manage Meal Plans</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #FFFBF5;
+            color: #5D4037;
+        }
+        
+        /* Admin Layout */
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background-color: #2D1B15;
+            color: #FFFBF5;
+            padding: 30px 20px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 251, 245, 0.2);
+        }
+        
+        .logo-icon {
+            font-size: 2rem;
+            color: #D7CCC8;
+        }
+        
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .nav-item {
+            padding: 15px 20px;
+            margin: 5px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .nav-item i {
+            width: 25px;
+        }
+        
+        .nav-item:hover {
+            background-color: rgba(255, 251, 245, 0.1);
+        }
+        
+        .nav-item.active {
+            background-color: #A1887F;
+            color: white;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 30px;
+        }
+        
+        /* Header */
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #D7CCC8;
+        }
+        
+        .page-title {
+            font-size: 1.8rem;
+            color: #8D6E63;
+        }
+        
+        /* Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #FFFBF5, #F5EFE6);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid #D7CCC8;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #A1887F;
+        }
+        
+        .stat-label {
+            color: #8D6E63;
+            margin-top: 10px;
+        }
+        
+        /* Plan Cards in Admin */
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .admin-plan-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            border: 1px solid #D7CCC8;
+            transition: transform 0.2s;
+        }
+        
+        .admin-plan-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .plan-header {
+            background: linear-gradient(135deg, #A1887F, #8D6E63);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .plan-header h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .plan-price {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        
+        .plan-period {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .plan-body {
+            padding: 20px;
+        }
+        
+        .plan-feature-list {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+        
+        .plan-feature-list li {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #5D4037;
+        }
+        
+        .plan-feature-list li i {
+            color: #A1887F;
+            width: 20px;
+        }
+        
+        .plan-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .btn-edit {
+            flex: 1;
+            background-color: #F5EFE6;
+            border: 1px solid #D7CCC8;
+            color: #8D6E63;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-edit:hover {
+            background-color: #D7CCC8;
+        }
+        
+        .btn-delete {
+            flex: 1;
+            background-color: #FFF0F0;
+            border: 1px solid #ffcdd2;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-delete:hover {
+            background-color: #ffcdd2;
+        }
+        
+        /* Form Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 550px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 30px;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #D7CCC8;
+        }
+        
+        .modal-header h2 {
+            color: #8D6E63;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #A1887F;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #8D6E63;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #D7CCC8;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #A1887F;
+        }
+        
+        .features-input {
+            background: #F5EFE6;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .feature-item {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .feature-item input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #D7CCC8;
+            border-radius: 5px;
+        }
+        
+        .add-feature-btn {
+            background-color: #A1887F;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .remove-feature {
+            background: #ffcdd2;
+            border: none;
+            width: 35px;
+            border-radius: 5px;
+            cursor: pointer;
+            color: #c62828;
+        }
+        
+        .btn-save {
+            background: #A1887F;
+            color: white;
+            border: none;
+            padding: 15px;
+            width: 100%;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 20px;
+        }
+        
+        .btn-save:hover {
+            background: #8D6E63;
+        }
+        
+        .btn-add {
+            background: #8D6E63;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        
+        .btn-add:hover {
+            background: #5D4037;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: #A1887F;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #2E7D32;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            z-index: 1100;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .toast.show {
+            opacity: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 80px;
+                padding: 20px 10px;
+            }
+            .sidebar .logo-text, .sidebar .nav-item span {
+                display: none;
+            }
+            .main-content {
+                margin-left: 80px;
+            }
+            .nav-item {
+                justify-content: center;
+            }
+            .nav-item i {
+                margin: 0;
+            }
+        }
+		.white-btn {
+    background-color: white;   /* white background */
+    color: black;              /* text and icon color */
+    padding: 10px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;                  /* space between icon and text */
+    border: 1px solid #ccc;    /* optional subtle border */
+}
+
+.white-btn:hover {
+    background-color: #f9f9f9; /* light hover effect */
+}
+
+    </style>
+</head>
+<body>
+<div class="admin-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <i class="fas fa-utensils logo-icon"></i>
+            <span class="logo-text">T-POT Admin</span>
+        </div>
+        <div class="nav-item active" data-tab="plans">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Battle Plans</span>
+        </div>
+        <div class="nav-item white-btn" data-tab="subscriptions">
+            <i class="fas fa-users"></i>
+            <span>Subscriptions</span>
+        </div>
+        <div class="nav-item white-btn" data-tab="settings">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+        </div>
+		<a href="RegisterMenu.html" class="nav-item white-btn">
+    <i class="fas fa-bars"></i>
+    <span>Register Menu</span>
+</a>
+<a href="EditMenu.html" class="nav-item white-btn">
+    <i class="fas fa-edit"></i>
+    <span>Edit Menu</span>
+</a><a href="InventoryManager.html" class="nav-item white-btn">
+    <i class="fas fa-user"></i>
+    <span>Inventory Manager</span>
+</a>
+</a><a href="SmartSalesCounter.html" class="nav-item white-btn">
+    <i class="fas fa-line-chart"></i>
+    <span>Sales Counter</span>
+</a>
+</a><a href="ProfitLossDashboard.html" class="nav-item white-btn">
+    <i class="fas fa-check"></i>
+    <span>Profit & Loss Dashboard</span>
+</a>
+<a href="OutstandingPaymentSettlement.html" class="nav-item white-btn">
+    <i class="fas fa-check"></i>
+    <span>Outstanding Payment Settlement</span>
+</a>
+</a><a href="MajalisasOrdersDashboard.html" class="nav-item white-btn">
+    <i class="fas fa-users"></i>
+    <span>Majalisas Orders Dashboard</span>
+</a>
+</a><a href="WeeklyMealRotationManager.html" class="nav-item white-btn">
+    <i class="fas fa-cutlery"></i>
+    <span>Meal Rotation Manager</span>
+</a>
+
+	 <a href="GamesSetting.html" class="nav-item white-btn">
+    <i class="fas fa-gamepad"></i>
+    <span>Games Setting</span>
+</a>
+
+<a href="ViewOrders.html" class="nav-item white-btn">
+    <i class="fas fa-shopping-cart"></i>
+    <span>View Orders</span>
+</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="admin-header">
+            <h1 class="page-title">⚔️ The Last Battle - Admin Panel</h1>
+            <div><i class="fas fa-shield-alt"></i> Admin Mode</div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalPlans">0</div>
+                <div class="stat-label">Active Plans</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalSubs">0</div>
+                <div class="stat-label">Total Subscribers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="monthlyRevenue">₦0</div>
+                <div class="stat-label">This Month Revenue</div>
+            </div>
+        </div>
+
+        <!-- Plans Tab -->
+        <div id="plansTab">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="color: #8D6E63;">⚔️ Meal Battle Plans</h2>
+                <button class="btn-add" id="addPlanBtn"><i class="fas fa-plus"></i> Create New Plan</button>
+            </div>
+            <div id="plansContainer" class="plans-grid">
+                <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading plans...</div>
+            </div>
+        </div>
+
+        <!-- Subscriptions Tab (Hidden initially) -->
+        <div id="subscriptionsTab" style="display: none;">
+            <h2 style="color: #8D6E63; margin-bottom: 20px;">📋 Recent Subscriptions</h2>
+            <div id="subscriptionsContainer" style="background: white; border-radius: 15px; padding: 20px;">
+                <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading subscriptions...</div>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settingsTab" style="display: none;">
+            <h2 style="color: #8D6E63; margin-bottom: 20px;">⚙️ Program Settings</h2>
+            <div style="background: white; border-radius: 15px; padding: 30px;">
+                <p style="margin-bottom: 20px;">The Last Battle program helps students get meals even when funds are low.</p>
+                <button id="resetStatsBtn" style="background: #ffcdd2; color: #c62828; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">Reset Demo Stats</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Add/Edit Plan -->
+<div class="modal-overlay" id="planModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="modalTitle">Create Battle Plan</h2>
+            <button class="modal-close" id="closeModal">&times;</button>
+        </div>
+        <form id="planForm">
+            <input type="hidden" id="planId">
+            <div class="form-group">
+                <label class="form-label">Plan Name *</label>
+                <input type="text" class="form-control" id="planName" required placeholder="e.g., Weekly Warrior">
+            </div>
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label class="form-label">Price (₦) *</label>
+                    <input type="number" class="form-control" id="planPrice" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Period Label *</label>
+                    <input type="text" class="form-control" id="planPeriod" required placeholder="per week / per month">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Savings Text</label>
+                <input type="text" class="form-control" id="planSavings" placeholder="e.g., Save 20% vs daily">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Features / Benefits *</label>
+                <div id="featuresList" class="features-input">
+                    <div class="feature-item">
+                        <input type="text" placeholder="Feature" class="feature-input">
+                        <button type="button" class="remove-feature" style="display:none;">✖</button>
+                    </div>
+                </div>
+                <button type="button" id="addFeatureBtn" class="add-feature-btn"><i class="fas fa-plus"></i> Add Feature</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Meals Per Day</label>
+                <input type="number" class="form-control" id="mealsPerDay" value="1" min="1" max="3">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Duration (days)</label>
+                <input type="number" class="form-control" id="durationDays" placeholder="7, 30, 120">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Is Popular?</label>
+                <select class="form-control" id="isPopular">
+                    <option value="false">No</option>
+                    <option value="true">Yes (Featured)</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-save">Save Plan</button>
+        </form>
+    </div>
+</div>
+
+<div id="toast" class="toast">Plan saved successfully!</div>
+
+<script>
+    // Firebase Configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyDRKWldl8_NSAek4na-H-SQWjUBrxt26iI",
+        authDomain: "tpot.com.ng",
+        projectId: "t-pot-60c3d",
+        storageBucket: "t-pot-60c3d.firebasestorage.app",
+        messagingSenderId: "272048176539",
+        appId: "1:272048176539:web:d73d09a39171c8ef12753e"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    
+    // Collections
+    const plansCollection = db.collection('battlePlans');
+    const subscriptionsCollection = db.collection('battleSubscriptions');
+    
+    let currentFeatures = [''];
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        setupEventListeners();
+        loadPlans();
+        loadSubscriptions();
+        updateStats();
+    });
+
+    function setupEventListeners() {
+        // Tab switching
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+                const tab = item.dataset.tab;
+                document.getElementById('plansTab').style.display = tab === 'plans' ? 'block' : 'none';
+                document.getElementById('subscriptionsTab').style.display = tab === 'subscriptions' ? 'block' : 'none';
+                document.getElementById('settingsTab').style.display = tab === 'settings' ? 'block' : 'none';
+                if (tab === 'subscriptions') loadSubscriptions();
+                if (tab === 'plans') loadPlans();
+            });
+        });
+        
+        document.getElementById('addPlanBtn').addEventListener('click', () => openModal());
+        document.getElementById('closeModal').addEventListener('click', closeModal);
+        document.getElementById('addFeatureBtn').addEventListener('click', addFeatureField);
+        document.getElementById('planForm').addEventListener('submit', savePlan);
+        document.getElementById('resetStatsBtn').addEventListener('click', resetDemoStats);
+        
+        // Close modal on outside click
+        document.getElementById('planModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('planModal')) closeModal();
+        });
+    }
+    
+    function addFeatureField(value = '') {
+        const container = document.getElementById('featuresList');
+        const div = document.createElement('div');
+        div.className = 'feature-item';
+        div.innerHTML = `
+            <input type="text" placeholder="Feature" class="feature-input" value="${escapeHtml(value)}">
+            <button type="button" class="remove-feature" onclick="this.parentElement.remove()">✖</button>
+        `;
+        container.appendChild(div);
+    }
+    
+    function getFeaturesFromInputs() {
+        const inputs = document.querySelectorAll('#featuresList .feature-input');
+        const features = [];
+        inputs.forEach(input => {
+            if (input.value.trim()) features.push(input.value.trim());
+        });
+        return features;
+    }
+    
+    function resetFeaturesInputs(features) {
+        const container = document.getElementById('featuresList');
+        container.innerHTML = '';
+        if (!features || features.length === 0) features = [''];
+        features.forEach(f => addFeatureField(f));
+    }
+    
+    async function savePlan(e) {
+        e.preventDefault();
+        const id = document.getElementById('planId').value;
+        const planData = {
+            name: document.getElementById('planName').value,
+            price: parseInt(document.getElementById('planPrice').value),
+            period: document.getElementById('planPeriod').value,
+            savings: document.getElementById('planSavings').value || '',
+            features: getFeaturesFromInputs(),
+            mealsPerDay: parseInt(document.getElementById('mealsPerDay').value) || 1,
+            durationDays: parseInt(document.getElementById('durationDays').value) || null,
+            isPopular: document.getElementById('isPopular').value === 'true',
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        try {
+            if (id) {
+                await plansCollection.doc(id).update(planData);
+                showToast('Plan updated successfully!');
+            } else {
+                planData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                await plansCollection.add(planData);
+                showToast('Plan created successfully!');
+            }
+            closeModal();
+            loadPlans();
+            updateStats();
+        } catch (error) {
+            console.error('Error saving plan:', error);
+            showToast('Error saving plan: ' + error.message);
+        }
+    }
+    
+    async function loadPlans() {
+        const container = document.getElementById('plansContainer');
+        container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading battle plans...</div>';
+        
+        try {
+            const snapshot = await plansCollection.orderBy('price', 'asc').get();
+            if (snapshot.empty) {
+                // Load default plans if none exist
+                await loadDefaultPlans();
+                return loadPlans();
+            }
+            
+            let plansHtml = '';
+            snapshot.forEach(doc => {
+                const plan = doc.data();
+                plansHtml += `
+                    <div class="admin-plan-card">
+                        <div class="plan-header">
+                            <h3>${escapeHtml(plan.name)}</h3>
+                            <div class="plan-price">₦${plan.price.toLocaleString()}</div>
+                            <div class="plan-period">${escapeHtml(plan.period)}</div>
+                            ${plan.savings ? `<div style="background: rgba(255,215,0,0.2); padding: 5px; border-radius: 20px; margin-top: 8px;">⚡ ${escapeHtml(plan.savings)}</div>` : ''}
+                            ${plan.isPopular ? '<div style="margin-top: 10px;"><i class="fas fa-star"></i> Most Popular</div>' : ''}
+                        </div>
+                        <div class="plan-body">
+                            <ul class="plan-feature-list">
+                                ${plan.features.map(f => `<li><i class="fas fa-check"></i> ${escapeHtml(f)}</li>`).join('')}
+                            </ul>
+                            <div class="plan-actions">
+                                <button class="btn-edit" onclick="editPlan('${doc.id}')"><i class="fas fa-edit"></i> Edit</button>
+                                <button class="btn-delete" onclick="deletePlan('${doc.id}')"><i class="fas fa-trash"></i> Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = plansHtml;
+            document.getElementById('totalPlans').textContent = snapshot.size;
+        } catch (error) {
+            console.error('Error loading plans:', error);
+            container.innerHTML = '<div class="empty-state">Error loading plans. Please check Firebase permissions.</div>';
+        }
+    }
+    
+    async function loadDefaultPlans() {
+        const defaultPlans = [
+            { name: "Weekly Warrior", price: 3500, period: "per week", savings: "Save 20% vs daily", features: ["1 meal per day", "7 days coverage", "Choose from 5 main dishes", "Free T-POT tea with every meal", "Flexible meal times"], mealsPerDay: 1, durationDays: 7, isPopular: false },
+            { name: "Monthly General", price: 12000, period: "per month", savings: "Save 40% vs daily", features: ["1 meal per day", "30 days coverage", "Choose from 10+ dishes", "Free T-POT tea + snack", "2 extra weekend meals", "Priority ordering"], mealsPerDay: 1, durationDays: 30, isPopular: true },
+            { name: "Semester Champion", price: 30000, period: "full semester", savings: "Save 50% vs daily", features: ["2 meals per day", "Full semester coverage", "All menu items included", "Free drinks with every meal", "Weekend special meals", "Exam period bonus meals", "VIP treatment"], mealsPerDay: 2, durationDays: 120, isPopular: false }
+        ];
+        
+        for (const plan of defaultPlans) {
+            await plansCollection.add({
+                ...plan,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+        showToast('Default plans loaded!');
+    }
+    
+    async function loadSubscriptions() {
+        const container = document.getElementById('subscriptionsContainer');
+        container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading subscriptions...</div>';
+        
+        try {
+            const snapshot = await subscriptionsCollection.orderBy('timestamp', 'desc').limit(20).get();
+            if (snapshot.empty) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i> No subscriptions yet</div>';
+                document.getElementById('totalSubs').textContent = '0';
+                return;
+            }
+            
+            let subsHtml = '<table style="width:100%; border-collapse: collapse;">';
+            subsHtml += '<tr style="background:#F5EFE6;"><th style="padding:12px; text-align:left;">Student</th><th style="padding:12px; text-align:left;">Plan</th><th style="padding:12px; text-align:left;">Amount</th><th style="padding:12px; text-align:left;">Date</th></tr>';
+            let totalSubs = 0;
+            let monthlyRevenue = 0;
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            
+            snapshot.forEach(doc => {
+                const sub = doc.data();
+                totalSubs++;
+                const subDate = sub.timestamp?.toDate() || new Date();
+                if (subDate.getMonth() === currentMonth && subDate.getFullYear() === currentYear) {
+                    monthlyRevenue += sub.amount || 0;
+                }
+                subsHtml += `
+                    <tr style="border-bottom:1px solid #D7CCC8;">
+                        <td style="padding:12px;">${escapeHtml(sub.studentName || 'N/A')}<br><small>${escapeHtml(sub.studentId || '')}</small></td>
+                        <td style="padding:12px;">${escapeHtml(sub.planName || '')}</td>
+                        <td style="padding:12px;">₦${(sub.amount || 0).toLocaleString()}</td>
+                        <td style="padding:12px;">${subDate.toLocaleDateString()}</td>
+                    </tr>
+                `;
+            });
+            subsHtml += '</table>';
+            container.innerHTML = subsHtml;
+            document.getElementById('totalSubs').textContent = totalSubs;
+            document.getElementById('monthlyRevenue').textContent = `₦${monthlyRevenue.toLocaleString()}`;
+        } catch (error) {
+            console.error('Error loading subscriptions:', error);
+            container.innerHTML = '<div class="empty-state">Error loading subscriptions</div>';
+        }
+    }
+    
+    async function updateStats() {
+        try {
+            const plansSnap = await plansCollection.get();
+            document.getElementById('totalPlans').textContent = plansSnap.size;
+            const subsSnap = await subscriptionsCollection.get();
+            let monthlyRev = 0;
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            subsSnap.forEach(doc => {
+                const sub = doc.data();
+                const subDate = sub.timestamp?.toDate() || new Date();
+                if (subDate.getMonth() === currentMonth && subDate.getFullYear() === currentYear) {
+                    monthlyRev += sub.amount || 0;
+                }
+            });
+            document.getElementById('totalSubs').textContent = subsSnap.size;
+            document.getElementById('monthlyRevenue').textContent = `₦${monthlyRev.toLocaleString()}`;
+        } catch(e) { console.warn(e); }
+    }
+    
+    window.editPlan = async (id) => {
+        const doc = await plansCollection.doc(id).get();
+        if (!doc.exists) return;
+        const plan = doc.data();
+        document.getElementById('planId').value = id;
+        document.getElementById('planName').value = plan.name;
+        document.getElementById('planPrice').value = plan.price;
+        document.getElementById('planPeriod').value = plan.period;
+        document.getElementById('planSavings').value = plan.savings || '';
+        document.getElementById('mealsPerDay').value = plan.mealsPerDay || 1;
+        document.getElementById('durationDays').value = plan.durationDays || '';
+        document.getElementById('isPopular').value = plan.isPopular ? 'true' : 'false';
+        resetFeaturesInputs(plan.features || ['']);
+        document.getElementById('modalTitle').textContent = 'Edit Battle Plan';
+        document.getElementById('planModal').classList.add('active');
+    };
+    
+    window.deletePlan = async (id) => {
+        if (confirm('Are you sure you want to delete this battle plan? This may affect active subscribers.')) {
+            await plansCollection.doc(id).delete();
+            showToast('Plan deleted');
+            loadPlans();
+            updateStats();
+        }
+    };
+    
+    function openModal() {
+        document.getElementById('planId').value = '';
+        document.getElementById('planForm').reset();
+        document.getElementById('planName').value = '';
+        document.getElementById('planPrice').value = '';
+        document.getElementById('planPeriod').value = '';
+        document.getElementById('planSavings').value = '';
+        document.getElementById('mealsPerDay').value = '1';
+        document.getElementById('durationDays').value = '';
+        document.getElementById('isPopular').value = 'false';
+        resetFeaturesInputs(['']);
+        document.getElementById('modalTitle').textContent = 'Create New Battle Plan';
+        document.getElementById('planModal').classList.add('active');
+    }
+    
+    function closeModal() {
+        document.getElementById('planModal').classList.remove('active');
+    }
+    
+    function resetDemoStats() {
+        if (confirm('Reset will clear all demo subscription data. Continue?')) {
+            // This is just for demo; in production you'd clear specific data
+            showToast('Demo stats reset (simulated)');
+        }
+    }
+    
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+</script>
+</body>
+</html>

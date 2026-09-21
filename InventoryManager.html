@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T-POT & SNACKS | Batch Inventory Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #FFFBF5;
+            color: #4E342E;
+        }
+
+        header {
+            background: #8D6E63;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .logo-main {
+            font-size: 2.5rem;
+            font-weight: 800;
+        }
+
+        .logo-main .big-t {
+            color: #FFD966;
+            font-size: 3.2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 24px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        }
+
+        .card h2 {
+            color: #8D6E63;
+            margin-bottom: 20px;
+            border-left: 5px solid #FFD966;
+            padding-left: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #5D4037;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #E0CFC9;
+            border-radius: 12px;
+            font-size: 0.95rem;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #8D6E63;
+        }
+
+        input[readonly] {
+            background-color: #F5F0EB;
+            cursor: not-allowed;
+            color: #6B5B55;
+            border-color: #D7CCC8;
+        }
+
+        .btn-primary {
+            background: #8D6E63;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1rem;
+            transition: 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: #5D4037;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #D32F2F;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .btn-warning {
+            background: #FF9800;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .inventory-table {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #EFE2D6;
+        }
+
+        th {
+            background: #F5EFE6;
+            color: #8D6E63;
+            position: sticky;
+            top: 0;
+        }
+
+        .badge {
+            background: #E8F5E9;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-empty {
+            background: #FFEBEE;
+            color: #C62828;
+        }
+
+        .badge-active {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        .stock-value {
+            font-weight: bold;
+            color: #2E7D32;
+        }
+
+        .info-note {
+            background: #FFF9C4;
+            padding: 12px;
+            border-radius: 12px;
+            margin-top: 15px;
+            font-size: 0.85rem;
+        }
+
+        .menu-item-preview {
+            background: #E8F5E9;
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+
+        .batch-badge {
+            background: #8D6E63;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            display: inline-block;
+        }
+
+        .batch-number {
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #8D6E63;
+        }
+
+        @media (max-width: 900px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo-main"><span class="big-t">T</span>-POT &amp; SNACKS <span style="font-size:1rem;">• BATCH INVENTORY MANAGER</span></div>
+            <p>Create batches for menu items | Each batch has permanent date | Multiple batches allowed per item</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="grid-2">
+            <!-- Left: Add New Batch Form -->
+            <div class="card">
+                <h2><i class="fas fa-plus-circle"></i> Add New Batch</h2>
+                <form id="inventoryForm">
+                    <input type="hidden" id="batchId">
+                    
+                    <div class="form-group">
+                        <label>Select Menu Item *</label>
+                        <select id="menuItemSelect" required>
+                            <option value="">-- Load menu items from database --</option>
+                        </select>
+                        <div id="menuItemPreview" class="menu-item-preview" style="display:none;"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Purchase Unit *</label>
+                        <select id="purchaseUnit" required>
+                            <option value="Crate">Crate</option>
+                            <option value="Bag">Bag</option>
+                            <option value="Carton">Carton</option>
+                            <option value="Basket">Basket</option>
+                            <option value="Kilogram">Kilogram</option>
+                            <option value="Liter">Liter</option>
+                            <option value="Dozen">Dozen</option>
+                            <option value="Packet">Packet</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Quantity per Purchase Unit *</label>
+                        <input type="number" id="piecesPerUnit" required placeholder="e.g., 30 (if 1 crate = 30 pieces)">
+                        <small style="color: #8D6E63;">How many sellable pieces/plates in one purchase unit?</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Purchase Price (per purchase unit) *</label>
+                        <input type="number" id="purchasePrice" required placeholder="e.g., 5400">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Selling Price (per piece/plate) *</label>
+                        <input type="number" id="sellingPrice" required placeholder="e.g., 250">
+                        <small>This should match the menu item price</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Batch Quantity (in purchase units) *</label>
+                        <input type="number" id="stockUnits" required placeholder="e.g., 5 crates" value="0" step="0.5">
+                        <small>How many crates/bags in this batch?</small>
+                    </div>
+
+                    <!-- PERMANENT BATCH DATE - Readonly, auto-set -->
+                    <div class="form-group">
+                        <label><i class="fas fa-calendar-alt"></i> Batch Date (Permanent)</label>
+                        <input type="text" id="stockDateDisplay" readonly placeholder="Will be set automatically on creation">
+                        <small style="color: #A1887F;">⏺ This batch date is permanent and cannot be changed.</small>
+                    </div>
+
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i> Save New Batch
+                    </button>
+                    <button type="button" id="clearBtn" style="margin-top: 10px; background: #A1887F;" class="btn-primary">
+                        Clear Form
+                    </button>
+                </form>
+
+                <div class="info-note">
+                    <i class="fas fa-lightbulb"></i> <strong>Batch System:</strong><br>
+                    • Each batch has its own permanent date<br>
+                    • Multiple batches allowed for same menu item<br>
+                    • Sales are deducted from specific batches<br>
+                    • When a batch is empty, create a new batch
+                </div>
+            </div>
+
+            <!-- Right: Batches List -->
+            <div class="card">
+                <h2><i class="fas fa-clipboard-list"></i> All Batches</h2>
+                <div style="overflow-x: auto; max-height: 500px; overflow-y: auto;">
+                    <table id="inventoryTable">
+                        <thead>
+                            <tr>
+                                <th>Batch #</th>
+                                <th>Menu Item</th>
+                                <th>Unit</th>
+                                <th>Batch Size</th>
+                                <th>Total Pieces</th>
+                                <th>Sell Price</th>
+                                <th>Batch Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryBody">
+                            <tr><td colspan="9" style="text-align:center;">Loading batches...</td></tr>
+                        </tbody>
+                     </>
+                </div>
+                <div style="margin-top: 20px; text-align: right;">
+                    <button id="goToSalesBtn" class="btn-primary" style="width: auto; background: #2E7D32;">
+                        <i class="fas fa-cash-register"></i> Go to Sales Counter →
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDRKWldl8_NSAek4na-H-SQWjUBrxt26iI",
+            authDomain: "tpot.com.ng",
+            projectId: "t-pot-60c3d",
+            storageBucket: "t-pot-60c3d.firebasestorage.app",
+            messagingSenderId: "272048176539",
+            appId: "1:272048176539:web:d73d09a39171c8ef12753e"
+        };
+
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const menuItemsRef = db.collection("menuItems");
+        const batchesRef = db.collection("inventoryBatches");  // New collection for batches
+        const dailySalesRef = db.collection("dailySales");
+
+        // DOM Elements
+        const form = document.getElementById('inventoryForm');
+        const inventoryBody = document.getElementById('inventoryBody');
+        const clearBtn = document.getElementById('clearBtn');
+        const goToSalesBtn = document.getElementById('goToSalesBtn');
+        const menuItemSelect = document.getElementById('menuItemSelect');
+        const menuItemPreview = document.getElementById('menuItemPreview');
+        const stockDateDisplay = document.getElementById('stockDateDisplay');
+
+        let allMenuItems = [];
+        let allBatches = [];
+
+        // Helper: get current date in readable format (YYYY-MM-DD HH:MM:SS)
+        function getCurrentFormattedDateTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
+        // Generate batch number
+        function generateBatchNumber(itemName) {
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+            const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+            const prefix = itemName.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, '');
+            return `${prefix || 'BCH'}-${dateStr}-${random}`;
+        }
+
+        // Get total sold for a batch from sales records
+        async function getTotalSoldForBatch(batchId) {
+            try {
+                const snapshot = await dailySalesRef.where("batchId", "==", batchId).get();
+                let total = 0;
+                snapshot.forEach(doc => {
+                    total += doc.data().quantitySold || 0;
+                });
+                return total;
+            } catch (error) {
+                console.error("Error calculating sold total:", error);
+                return 0;
+            }
+        }
+
+        // Load Menu Items from menuItems collection
+        async function loadMenuItems() {
+            try {
+                const snapshot = await menuItemsRef.get();
+                if (snapshot.empty) {
+                    menuItemSelect.innerHTML = '<option value="">No menu items found. Please add items in RegisterMenu.html first</option>';
+                    return;
+                }
+
+                allMenuItems = [];
+                menuItemSelect.innerHTML = '<option value="">-- Select a menu item --</option>';
+                
+                snapshot.forEach(doc => {
+                    const item = { 
+                        id: doc.id, 
+                        name: doc.data().name || 'Unnamed',
+                        price: doc.data().price,
+                        priceNum: extractNumericPrice(doc.data().price),
+                        category: doc.data().category,
+                        description: doc.data().description
+                    };
+                    allMenuItems.push(item);
+                    
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = `${item.name} - ${item.price}`;
+                    menuItemSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Error loading menu items:", error);
+                menuItemSelect.innerHTML = '<option value="">Error loading menu items</option>';
+            }
+        }
+
+        // Helper to extract numeric price
+        function extractNumericPrice(priceStr) {
+            if (!priceStr) return 0;
+            const numericMatch = priceStr.toString().replace(/[₦,]/g, '').match(/\d+(\.\d+)?/);
+            return numericMatch ? parseFloat(numericMatch[0]) : 0;
+        }
+
+        // Show preview of selected menu item
+        menuItemSelect.addEventListener('change', (e) => {
+            const menuId = e.target.value;
+            if (!menuId) {
+                menuItemPreview.style.display = 'none';
+                return;
+            }
+            
+            const selected = allMenuItems.find(i => i.id === menuId);
+            if (selected) {
+                menuItemPreview.style.display = 'block';
+                menuItemPreview.innerHTML = `
+                    <i class="fas fa-info-circle"></i> <strong>${escapeHtml(selected.name)}</strong><br>
+                    Menu Price: ${selected.price}<br>
+                    Category: ${selected.category || 'N/A'}
+                    ${selected.description ? `<br><small>${selected.description.substring(0, 60)}...</small>` : ''}
+                `;
+                
+                // Auto-fill selling price from menu item price
+                if (selected.priceNum > 0) {
+                    document.getElementById('sellingPrice').value = selected.priceNum;
+                }
+            }
+        });
+
+        // Load all batches and display with remaining stock
+        async function loadBatches() {
+            try {
+                const snapshot = await batchesRef.orderBy("batchDateTimestamp", "desc").get();
+                
+                if (snapshot.empty) {
+                    inventoryBody.innerHTML = '<tr><td colspan="9" style="text-align:center;">No batches found. Add your first batch above!</td></tr>';
+                    return;
+                }
+
+                inventoryBody.innerHTML = '';
+                let batchNumber = 1;
+                
+                for (const doc of snapshot.docs) {
+                    const batch = doc.data();
+                    const totalSold = await getTotalSoldForBatch(doc.id);
+                    const originalPieces = (batch.stockUnits || 0) * (batch.piecesPerUnit || 0);
+                    const remainingPieces = originalPieces - totalSold;
+                    const remainingUnits = remainingPieces / batch.piecesPerUnit;
+                    
+                    const batchDate = batch.batchDateReadable || batch.batchDateOnly || 'Unknown';
+                    const status = remainingPieces <= 0 ? 'EMPTY' : (remainingPieces < 10 ? 'LOW' : 'ACTIVE');
+                    const statusClass = remainingPieces <= 0 ? 'badge-empty' : 'badge-active';
+                    const statusText = remainingPieces <= 0 ? '🔴 EMPTY' : (remainingPieces < 10 ? '🟡 LOW' : '🟢 ACTIVE');
+                    
+                    const row = document.createElement('tr');
+                    row.style.opacity = remainingPieces <= 0 ? '0.6' : '1';
+                    row.innerHTML = `
+                        <td><span class="batch-number">#${batchNumber}</span><br><small>${escapeHtml(batch.batchNumber || 'N/A')}</small></td>
+                        <td><strong>${escapeHtml(batch.itemName)}</strong><br><small style="color:#8D6E63;">${escapeHtml(batch.menuItemId?.substring(0, 8) || '')}...</small></td>
+                        <td>${batch.purchaseUnit}</td>
+                        <td>${batch.stockUnits} ${batch.purchaseUnit}(s)</td>
+                        <td>${originalPieces.toLocaleString()} pcs<br>
+                            <small style="color:${remainingPieces <= 0 ? '#C62828' : '#2E7D32'}">
+                                Remaining: ${remainingPieces.toLocaleString()} pcs
+                                (${remainingUnits.toFixed(2)} ${batch.purchaseUnit}s)
+                            </small>
+                        </td>
+                        <td>₦${batch.sellingPrice.toLocaleString()}</td>
+                        <td><span class="batch-badge"><i class="far fa-calendar-alt"></i> ${escapeHtml(batchDate)}</span></td>
+                        <td><span class="badge ${statusClass}">${statusText}</span></td>
+                        <td>
+                            ${remainingPieces <= 0 ? 
+                                `<button class="btn-warning" onclick="copyBatchForRestock('${doc.id}')" style="margin-right:5px;">
+                                    <i class="fas fa-copy"></i> Restock
+                                </button>` :
+                                `<button class="btn-danger" onclick="deleteBatch('${doc.id}')" style="margin-right:5px;">
+                                    <i class="fas fa-trash"></i>
+                                </button>`
+                            }
+                        </td>
+                    `;
+                    inventoryBody.appendChild(row);
+                    batchNumber++;
+                }
+            } catch (error) {
+                console.error("Error loading batches:", error);
+                inventoryBody.innerHTML = `<tr><td colspan="9">Error: ${error.message}</td></tr>`;
+            }
+        }
+
+        // Save New Batch
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const batchId = document.getElementById('batchId').value;
+            const menuItemId = document.getElementById('menuItemSelect').value;
+            
+            if (!menuItemId) {
+                alert("Please select a menu item");
+                return;
+            }
+            
+            const selectedMenuItem = allMenuItems.find(i => i.id === menuItemId);
+            if (!selectedMenuItem) {
+                alert("Selected menu item not found");
+                return;
+            }
+            
+            const purchaseUnit = document.getElementById('purchaseUnit').value;
+            const piecesPerUnit = parseFloat(document.getElementById('piecesPerUnit').value);
+            const purchasePrice = parseFloat(document.getElementById('purchasePrice').value);
+            const sellingPrice = parseFloat(document.getElementById('sellingPrice').value);
+            const stockUnits = parseFloat(document.getElementById('stockUnits').value);
+
+            if (isNaN(piecesPerUnit) || piecesPerUnit <= 0) {
+                alert("Please enter valid pieces per unit");
+                return;
+            }
+            if (isNaN(purchasePrice) || purchasePrice <= 0) {
+                alert("Please enter valid purchase price");
+                return;
+            }
+            if (isNaN(sellingPrice) || sellingPrice <= 0) {
+                alert("Please enter valid selling price");
+                return;
+            }
+            if (isNaN(stockUnits) || stockUnits <= 0) {
+                alert("Please enter valid batch quantity (must be greater than 0)");
+                return;
+            }
+
+            const currentDateTime = getCurrentFormattedDateTime();
+            const batchNumber = generateBatchNumber(selectedMenuItem.name);
+            
+            const batchData = {
+                menuItemId: menuItemId,
+                itemName: selectedMenuItem.name,
+                menuPrice: selectedMenuItem.price,
+                purchaseUnit: purchaseUnit,
+                piecesPerUnit: piecesPerUnit,
+                purchasePrice: purchasePrice,
+                sellingPrice: sellingPrice,
+                stockUnits: stockUnits,
+                totalPieces: stockUnits * piecesPerUnit,
+                category: selectedMenuItem.category,
+                batchNumber: batchNumber,
+                batchDateTimestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                batchDateReadable: currentDateTime,
+                batchDateOnly: currentDateTime.split(' ')[0],
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            try {
+                await batchesRef.add(batchData);
+                alert(`✅ New batch added!\n\nBatch #: ${batchNumber}\nItem: ${selectedMenuItem.name}\nQuantity: ${stockUnits} ${purchaseUnit}(s) = ${(stockUnits * piecesPerUnit).toLocaleString()} pieces\nBatch Date: ${currentDateTime}`);
+                
+                resetForm();
+                await loadBatches();
+            } catch (error) {
+                console.error("Save error:", error);
+                alert("❌ Error: " + error.message);
+            }
+        });
+
+        // Copy batch for restock (when empty)
+        window.copyBatchForRestock = async (oldBatchId) => {
+            try {
+                const oldBatchDoc = await batchesRef.doc(oldBatchId).get();
+                if (!oldBatchDoc.exists) {
+                    alert("Batch not found");
+                    return;
+                }
+                
+                const oldBatch = oldBatchDoc.data();
+                
+                // Pre-fill form with old batch data
+                document.getElementById('menuItemSelect').value = oldBatch.menuItemId;
+                document.getElementById('purchaseUnit').value = oldBatch.purchaseUnit;
+                document.getElementById('piecesPerUnit').value = oldBatch.piecesPerUnit;
+                document.getElementById('purchasePrice').value = oldBatch.purchasePrice;
+                document.getElementById('sellingPrice').value = oldBatch.sellingPrice;
+                
+                // Trigger preview
+                const event = new Event('change');
+                menuItemSelect.dispatchEvent(event);
+                
+                // Clear stock units for new input
+                document.getElementById('stockUnits').value = '';
+                document.getElementById('stockUnits').focus();
+                document.getElementById('stockUnits').placeholder = "Enter new batch quantity";
+                
+                // Scroll to form
+                document.querySelector('.card').scrollIntoView({ behavior: 'smooth' });
+                
+                alert(`Creating new batch for ${oldBatch.itemName}\nPlease enter the new quantity and save.`);
+            } catch (error) {
+                console.error("Error copying batch:", error);
+                alert("Error: " + error.message);
+            }
+        };
+
+        // Delete Batch (only if no sales or empty)
+        window.deleteBatch = async (id) => {
+            const totalSold = await getTotalSoldForBatch(id);
+            
+            if (totalSold > 0) {
+                alert(`⚠️ Cannot delete this batch because ${totalSold} item(s) have been sold from it.\n\nThis batch must be kept for sales records.`);
+                return;
+            }
+            
+            if (confirm("⚠️ Delete this batch permanently? This action cannot be undone.")) {
+                try {
+                    await batchesRef.doc(id).delete();
+                    alert("Batch deleted!");
+                    await loadBatches();
+                } catch (error) {
+                    alert("Error deleting: " + error.message);
+                }
+            }
+        };
+
+        // Reset Form
+        function resetForm() {
+            document.getElementById('batchId').value = '';
+            document.getElementById('menuItemSelect').value = '';
+            document.getElementById('purchaseUnit').value = 'Crate';
+            document.getElementById('piecesPerUnit').value = '';
+            document.getElementById('purchasePrice').value = '';
+            document.getElementById('sellingPrice').value = '';
+            document.getElementById('stockUnits').value = '';
+            menuItemPreview.style.display = 'none';
+            menuItemPreview.innerHTML = '';
+            
+            // Reset the permanent date field
+            stockDateDisplay.value = '';
+            stockDateDisplay.placeholder = 'Will be set automatically on creation (permanent)';
+        }
+
+        clearBtn.addEventListener('click', resetForm);
+
+        // Go to Sales Page
+        goToSalesBtn.addEventListener('click', () => {
+            window.location.href = 'SmartSalesCounter.html';
+        });
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        // Initial Load
+        async function init() {
+            await loadMenuItems();
+            await loadBatches();
+            resetForm();
+        }
+        
+        init();
+    </script>
+</body>
+</html>

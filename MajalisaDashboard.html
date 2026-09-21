@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>TPOT Shop | Majalisa Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            background: #f5f0ea;
+            color: #3a2a1f;
+        }
+
+        /* Header */
+        .header {
+            background: #2c3e2f;
+            color: #fef7e0;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .logo h1 {
+            font-size: 1.6rem;
+            font-weight: 600;
+        }
+
+        .logo span {
+            color: #f4b942;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(255,255,255,0.15);
+            padding: 0.5rem 1.2rem;
+            border-radius: 40px;
+        }
+
+        .logout-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 0.4rem 1rem;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+
+        /* Dashboard Layout */
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-radius: 24px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            height: fit-content;
+            position: sticky;
+            top: 1rem;
+        }
+
+        .majalisa-card {
+            background: linear-gradient(135deg, #2c3e2f, #1f3325);
+            border-radius: 20px;
+            padding: 1.5rem;
+            color: white;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .majalisa-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            word-break: break-word;
+        }
+
+        .majalisa-card p {
+            font-size: 0.8rem;
+            opacity: 0.85;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: #f9f5f0;
+            border: none;
+            border-radius: 16px;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #4a3728;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            text-align: left;
+        }
+
+        .nav-btn i {
+            width: 24px;
+            font-size: 1.1rem;
+            color: #b8652e;
+        }
+
+        .nav-btn.active, .nav-btn:hover {
+            background: linear-gradient(135deg, #d97a3c, #b8652e);
+            color: white;
+        }
+
+        .nav-btn.active i, .nav-btn:hover i {
+            color: white;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 24px;
+            padding: 1.8rem;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #b8652e;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px dashed #f0dbc8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        /* Search Bar */
+        .search-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px 18px;
+            border: 1.5px solid #e2dcd2;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: #d97a3c;
+        }
+
+        .search-btn {
+            background: #d97a3c;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .search-btn:hover {
+            background: #b8652e;
+        }
+
+        /* Product Grid */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .product-card {
+            background: #fefaf5;
+            border-radius: 20px;
+            overflow: hidden;
+            transition: 0.3s;
+            border: 1px solid #f0dbc8;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(184,101,46,0.12);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            background: #e8dfd4;
+        }
+
+        .product-info {
+            padding: 1rem;
+        }
+
+        .product-name {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #4a3728;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-price {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #b8652e;
+            margin-bottom: 0.75rem;
+        }
+
+        .order-btn {
+            background: linear-gradient(135deg, #d97a3c, #b8652e);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 40px;
+            width: 100%;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .order-btn:hover {
+            transform: scale(0.98);
+        }
+
+        /* Order History */
+        .filter-tabs {
+            display: flex;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: transparent;
+            border: 1.5px solid #e2dcd2;
+            padding: 0.5rem 1.2rem;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        .filter-btn.active {
+            background: #b8652e;
+            border-color: #b8652e;
+            color: white;
+        }
+
+        .order-card {
+            background: #fefaf5;
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            border: 1px solid #f0dbc8;
+        }
+
+        .order-status {
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .status-served {
+            background: #c8e6c9;
+            color: #1e5a2a;
+        }
+
+        .status-pending {
+            background: #ffe0b2;
+            color: #bf5b00;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #a1887f;
+        }
+
+        /* Settings */
+        .settings-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .settings-label {
+            font-weight: 600;
+            color: #4a3728;
+            margin-bottom: 0.3rem;
+        }
+
+        .settings-value {
+            background: #f9f5f0;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            color: #5a3a28;
+        }
+
+        .edit-btn {
+            background: #d97a3c;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 40px;
+            cursor: pointer;
+            margin-top: 1rem;
+            font-weight: 500;
+        }
+
+        /* Cart Badge */
+        .cart-badge {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: linear-gradient(135deg, #d97a3c, #b8652e);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            z-index: 1000;
+            transition: 0.2s;
+        }
+
+        .cart-badge:hover {
+            transform: scale(1.05);
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.2s;
+        }
+
+        .modal.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 28px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: #fefaf5;
+            border-radius: 12px;
+            margin-bottom: 0.5rem;
+        }
+
+        .cart-total {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin: 1rem 0;
+            text-align: right;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #d97a3c, #b8652e);
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 40px;
+            width: 100%;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-secondary {
+            background: #e2dcd2;
+            color: #4a3728;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 40px;
+            width: 100%;
+            margin-top: 0.5rem;
+            cursor: pointer;
+        }
+
+        footer {
+            background: #e8dfd4;
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            color: #6b5a4a;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                padding: 1rem;
+            }
+            .sidebar {
+                width: 100%;
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <h1><span>🧆</span> TPOT Shop · Majalisa Portal</h1>
+        </div>
+        <div class="user-info">
+            <i class="fas fa-users"></i>
+            <span id="majalisaNameDisplay">Loading...</span>
+            <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <div class="sidebar">
+            <div class="majalisa-card">
+                <h3 id="sidebarMajalisaName">—</h3>
+                <p><i class="fas fa-map-marker-alt"></i> <span id="sidebarLocation">—</span></p>
+                <p><i class="fas fa-tag"></i> <span id="sidebarGroupType">—</span></p>
+            </div>
+            <div class="nav-menu">
+                <button class="nav-btn active" data-tab="food"><i class="fas fa-utensils"></i> 🍽️ Food Gallery</button>
+                <button class="nav-btn" data-tab="orders"><i class="fas fa-history"></i> 📋 Order History</button>
+                <button class="nav-btn" data-tab="settings"><i class="fas fa-user-cog"></i> ⚙️ Majalisa Settings</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Food Gallery Tab -->
+            <div id="food" class="tab-content active">
+                <div class="section-title">
+                    <span><i class="fas fa-gallery"></i> Food Gallery</span>
+                    <span style="font-size: 0.8rem;">🍽️ Order for your majalisa</span>
+                </div>
+                <div class="search-bar">
+                    <input type="text" id="foodSearch" class="search-input" placeholder="🔍 Search menu items...">
+                    <button id="searchFoodBtn" class="search-btn"><i class="fas fa-search"></i> Search</button>
+                </div>
+                <div id="galleryItems">
+                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i> Loading menu...</div>
+                </div>
+            </div>
+
+            <!-- Order History Tab -->
+            <div id="orders" class="tab-content">
+                <div class="section-title">
+                    <span><i class="fas fa-receipt"></i> Order History</span>
+                    <span id="orderStatsBadge" style="font-size:0.8rem; background:#f0dbc8; padding:4px 12px; border-radius:40px;"></span>
+                </div>
+                <div class="filter-tabs" id="orderFilterTabs">
+                    <button class="filter-btn active" data-status="all">All Orders</button>
+                    <button class="filter-btn" data-status="served">✅ Served</button>
+                    <button class="filter-btn" data-status="pending">⏳ Pending</button>
+                </div>
+                <div id="ordersList">
+                    <div class="empty-state">Loading orders...</div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settings" class="tab-content">
+                <div class="section-title">
+                    <span><i class="fas fa-user-cog"></i> Majalisa Settings</span>
+                </div>
+                <div id="settingsInfo"></div>
+                <div style="margin-top: 1.5rem;">
+                    <button id="editSettingsBtn" class="edit-btn"><i class="fas fa-edit"></i> Edit Majalisa Info</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Badge -->
+    <div class="cart-badge" id="cartBadge">
+        <i class="fas fa-shopping-bag fa-2x"></i>
+        <span class="cart-count" id="cartCount">0</span>
+    </div>
+
+    <!-- Cart Modal -->
+    <div class="modal" id="cartModal">
+        <div class="modal-content">
+            <h3><i class="fas fa-shopping-cart"></i> Your Cart</h3>
+            <div id="cartItemsList"></div>
+            <div class="cart-total" id="cartTotal">Total: ₦0</div>
+            <button id="checkoutBtn" class="btn-primary">Place Order</button>
+            <button id="closeCartBtn" class="btn-secondary">Close</button>
+        </div>
+    </div>
+
+    <!-- Edit Majalisa Modal -->
+    <div class="modal" id="editMajalisaModal">
+        <div class="modal-content">
+            <h3><i class="fas fa-edit"></i> Edit Majalisa Information</h3>
+            <form id="editMajalisaForm">
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.3rem; font-weight: 600;">Majalisa Name</label>
+                    <input type="text" id="editMajalisaName" class="search-input" style="width: 100%;" required>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.3rem; font-weight: 600;">Location</label>
+                    <input type="text" id="editLocation" class="search-input" style="width: 100%;" required>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.3rem; font-weight: 600;">Group Type</label>
+                    <select id="editGroupType" class="search-input" style="width: 100%;">
+                        <option value="Friends & Family">Friends & Family</option>
+                        <option value="Community">Community</option>
+                        <option value="Sports / Hobby">Sports / Hobby</option>
+                        <option value="Professional">Professional</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.3rem; font-weight: 600;">Contact Phone</label>
+                    <input type="tel" id="editPhone" class="search-input" style="width: 100%;">
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.3rem; font-weight: 600;">Contact Email</label>
+                    <input type="email" id="editEmail" class="search-input" style="width: 100%;">
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn-primary" style="flex: 1;">Save Changes</button>
+                    <button type="button" id="closeEditModal" class="btn-secondary" style="flex: 1;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <p>🍜 TPOT Shop · Majalisa Management · Order food for your group gathering</p>
+    </footer>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDRKWldl8_NSAek4na-H-SQWjUBrxt26iI",
+            authDomain: "tpot.com.ng",
+            projectId: "t-pot-60c3d",
+            storageBucket: "t-pot-60c3d.firebasestorage.app",
+            messagingSenderId: "272048176539",
+            appId: "1:272048176539:web:d73d09a39171c8ef12753e"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Global variables
+        let currentMajalisaData = null;
+        let currentMajalisaId = null;
+        let galleryMenuItems = [];
+        let orderCart = [];
+        let allOrders = [];
+        let currentOrderFilter = "all";
+        let ordersUnsubscribe = null;
+
+        // Helper Functions
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        function showMessage(msg, isError = false) {
+            // Simple alert for demo, can be replaced with toast
+            alert(msg);
+        }
+
+        // Load Majalisa Data from Firestore using session
+        async function loadMajalisaData() {
+            // Check if we have stored session
+            const sessionStr = localStorage.getItem('tpot_majalisa_session');
+            if (!sessionStr) {
+                window.location.href = 'MajalisaLogin.html';
+                return;
+            }
+            
+            let session;
+            try {
+                session = JSON.parse(sessionStr);
+            } catch(e) {
+                window.location.href = 'MajalisaLogin.html';
+                return;
+            }
+            
+            if (!session.majalisaId) {
+                window.location.href = 'MajalisaLogin.html';
+                return;
+            }
+            
+            try {
+                const doc = await db.collection('majalisa').doc(session.majalisaId).get();
+                if (!doc.exists) {
+                    localStorage.removeItem('tpot_majalisa_session');
+                    window.location.href = 'MajalisaLogin.html';
+                    return;
+                }
+                currentMajalisaData = doc.data();
+                currentMajalisaId = doc.id;
+                
+                // Update UI with majalisa info
+                document.getElementById('majalisaNameDisplay').innerText = currentMajalisaData.majalisaName || 'Majalisa';
+                document.getElementById('sidebarMajalisaName').innerText = currentMajalisaData.majalisaName || '—';
+                document.getElementById('sidebarLocation').innerText = currentMajalisaData.location || '—';
+                document.getElementById('sidebarGroupType').innerText = currentMajalisaData.groupType || '—';
+                
+                // Load orders
+                loadOrdersRealtime();
+            } catch (error) {
+                console.error('Error loading majalisa:', error);
+                showMessage('Error loading profile', true);
+            }
+        }
+
+        // Load Food Gallery
+        async function loadGallery(searchTerm = '') {
+            const container = document.getElementById('galleryItems');
+            try {
+                const snapshot = await db.collection("menuItems").get();
+                galleryMenuItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                let filtered = searchTerm ? galleryMenuItems.filter(item => 
+                    item.name && item.name.toLowerCase().includes(searchTerm.toLowerCase())
+                ) : galleryMenuItems;
+                
+                if (!filtered.length) {
+                    container.innerHTML = '<div class="empty-state">No menu items found</div>';
+                    return;
+                }
+                
+                container.innerHTML = '<div class="product-grid"></div>';
+                const grid = container.querySelector('.product-grid');
+                
+                filtered.forEach(item => {
+                    const price = parseFloat(item.price?.replace(/[^0-9.-]/g, '')) || 0;
+                    const card = document.createElement('div');
+                    card.className = 'product-card';
+                    card.innerHTML = `
+                        <img class="product-image" src="${item.image || 'https://via.placeholder.com/300x200?text=T-POT'}" onerror="this.src='https://via.placeholder.com/300x200'">
+                        <div class="product-info">
+                            <div class="product-name">${escapeHtml(item.name)}</div>
+                            <div class="product-price">₦${price.toLocaleString()}</div>
+                            <button class="order-btn" data-id="${item.id}" data-name="${escapeHtml(item.name)}" data-price="${price}">Add to Cart 🛒</button>
+                        </div>
+                    `;
+                    card.querySelector('.order-btn').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        addToCart(item.id, item.name, price);
+                    });
+                    grid.appendChild(card);
+                });
+            } catch(e) {
+                console.error('Error loading menu:', e);
+                container.innerHTML = '<div class="empty-state">Error loading menu</div>';
+            }
+        }
+
+        // Cart Functions
+        function addToCart(id, name, price) {
+            let existing = orderCart.find(i => i.id === id);
+            if (existing) {
+                existing.quantity++;
+            } else {
+                orderCart.push({ id, name, price, quantity: 1 });
+            }
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            let count = orderCart.reduce((s, i) => s + i.quantity, 0);
+            document.getElementById('cartCount').textContent = count;
+            
+            let container = document.getElementById('cartItemsList');
+            let total = 0;
+            container.innerHTML = '';
+            
+            orderCart.forEach((item, idx) => {
+                let itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                let div = document.createElement('div');
+                div.className = 'cart-item';
+                div.innerHTML = `
+                    <div><strong>${escapeHtml(item.name)}</strong> x${item.quantity}<br>₦${item.price} ea</div>
+                    <div>
+                        <button class="decr-qty" data-idx="${idx}">-</button>
+                        ${item.quantity}
+                        <button class="incr-qty" data-idx="${idx}">+</button>
+                        <button class="rem-item" data-idx="${idx}">🗑️</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            
+            document.getElementById('cartTotal').textContent = `Total: ₦${total.toLocaleString()}`;
+            
+            // Attach event listeners
+            document.querySelectorAll('.decr-qty').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    let i = parseInt(btn.dataset.idx);
+                    if (orderCart[i].quantity > 1) orderCart[i].quantity--;
+                    else orderCart.splice(i, 1);
+                    updateCartUI();
+                });
+            });
+            document.querySelectorAll('.incr-qty').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    let i = parseInt(btn.dataset.idx);
+                    orderCart[i].quantity++;
+                    updateCartUI();
+                });
+            });
+            document.querySelectorAll('.rem-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    let i = parseInt(btn.dataset.idx);
+                    orderCart.splice(i, 1);
+                    updateCartUI();
+                });
+            });
+        }
+
+        async function placeAllOrders() {
+            if (!currentMajalisaData || !currentMajalisaId) {
+                showMessage('Please login again', true);
+                return;
+            }
+            if (orderCart.length === 0) {
+                showMessage('Cart is empty', true);
+                return;
+            }
+            
+            try {
+                for (const item of orderCart) {
+                    const finalPrice = item.price * item.quantity;
+                    await db.collection('majalisa_orders').add({
+                        majalisaId: currentMajalisaId,
+                        majalisaName: currentMajalisaData.majalisaName,
+                        itemName: item.name,
+                        itemId: item.id,
+                        quantity: item.quantity,
+                        totalPrice: finalPrice,
+                        status: 'pending',
+                        orderDate: firebase.firestore.FieldValue.serverTimestamp(),
+                        location: currentMajalisaData.location
+                    });
+                }
+                showMessage(`✅ ${orderCart.length} order(s) placed successfully! TPOT will prepare your order.`);
+                orderCart = [];
+                updateCartUI();
+                document.getElementById('cartModal').classList.remove('active');
+            } catch (e) {
+                showMessage('Error placing order: ' + e.message, true);
+            }
+        }
+
+        // Order History with Realtime
+        function renderOrders() {
+            let filtered = currentOrderFilter === 'all' ? allOrders : allOrders.filter(o => o.status === currentOrderFilter);
+            filtered.sort((a, b) => (b.orderDate?.toDate?.()?.getTime() || 0) - (a.orderDate?.toDate?.()?.getTime() || 0));
+            
+            let served = allOrders.filter(o => o.status === 'served').length;
+            let pending = allOrders.filter(o => o.status === 'pending').length;
+            document.getElementById('orderStatsBadge').innerHTML = `Total:${allOrders.length} | ✅ Served:${served} | ⏳ Pending:${pending}`;
+            
+            if (!filtered.length) {
+                document.getElementById('ordersList').innerHTML = '<div class="empty-state">No orders found</div>';
+                return;
+            }
+            
+            document.getElementById('ordersList').innerHTML = filtered.map(o => `
+                <div class="order-card">
+                    <div>
+                        <strong>${escapeHtml(o.itemName)}</strong> x${o.quantity || 1}<br>
+                        <small>${o.orderDate?.toDate?.()?.toLocaleString() || 'Just now'}</small>
+                    </div>
+                    <div>
+                        <div class="order-status ${o.status === 'served' ? 'status-served' : 'status-pending'}">
+                            ${o.status?.toUpperCase() || 'PENDING'}
+                        </div>
+                        <div style="font-weight: 700; margin-top: 5px;">₦${(o.totalPrice || 0).toLocaleString()}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadOrdersRealtime() {
+            if (!currentMajalisaId) return;
+            if (ordersUnsubscribe) ordersUnsubscribe();
+            ordersUnsubscribe = db.collection('majalisa_orders')
+                .where('majalisaId', '==', currentMajalisaId)
+                .onSnapshot(snapshot => {
+                    allOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderOrders();
+                }, error => {
+                    console.error('Orders error:', error);
+                });
+        }
+
+        // Settings
+        function loadSettings() {
+            if (!currentMajalisaData) return;
+            document.getElementById('settingsInfo').innerHTML = `
+                <div style="background:#fefaf5; border-radius:20px; padding:1.5rem;">
+                    <div class="settings-group">
+                        <div class="settings-label"><i class="fas fa-tag"></i> Majalisa Name</div>
+                        <div class="settings-value">${escapeHtml(currentMajalisaData.majalisaName || '—')}</div>
+                    </div>
+                    <div class="settings-group">
+                        <div class="settings-label"><i class="fas fa-map-marker-alt"></i> Location</div>
+                        <div class="settings-value">${escapeHtml(currentMajalisaData.location || '—')}</div>
+                    </div>
+                    <div class="settings-group">
+                        <div class="settings-label"><i class="fas fa-users"></i> Group Type</div>
+                        <div class="settings-value">${escapeHtml(currentMajalisaData.groupType || '—')}</div>
+                    </div>
+                    <div class="settings-group">
+                        <div class="settings-label"><i class="fas fa-phone"></i> Contact Phone</div>
+                        <div class="settings-value">${escapeHtml(currentMajalisaData.contactPhone || 'Not provided')}</div>
+                    </div>
+                    <div class="settings-group">
+                        <div class="settings-label"><i class="fas fa-envelope"></i> Contact Email</div>
+                        <div class="settings-value">${escapeHtml(currentMajalisaData.contactEmail || 'Not provided')}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function updateMajalisaInfo(updatedData) {
+            try {
+                await db.collection('majalisa').doc(currentMajalisaId).update(updatedData);
+                currentMajalisaData = { ...currentMajalisaData, ...updatedData };
+                loadSettings();
+                document.getElementById('sidebarMajalisaName').innerText = currentMajalisaData.majalisaName;
+                document.getElementById('sidebarLocation').innerText = currentMajalisaData.location;
+                document.getElementById('sidebarGroupType').innerText = currentMajalisaData.groupType;
+                document.getElementById('majalisaNameDisplay').innerText = currentMajalisaData.majalisaName;
+                showMessage('Majalisa information updated successfully!');
+                document.getElementById('editMajalisaModal').classList.remove('active');
+            } catch (error) {
+                showMessage('Error updating: ' + error.message, true);
+            }
+        }
+
+        // Navigation
+        function setupNavigation() {
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                    document.getElementById(btn.dataset.tab).classList.add('active');
+                    if (btn.dataset.tab === 'orders') renderOrders();
+                });
+            });
+        }
+
+        // Event Listeners
+        document.getElementById('searchFoodBtn').addEventListener('click', () => {
+            loadGallery(document.getElementById('foodSearch').value);
+        });
+        document.getElementById('foodSearch').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') loadGallery(e.target.value);
+        });
+        
+        document.getElementById('cartBadge').addEventListener('click', () => {
+            updateCartUI();
+            document.getElementById('cartModal').classList.add('active');
+        });
+        document.getElementById('closeCartBtn').addEventListener('click', () => {
+            document.getElementById('cartModal').classList.remove('active');
+        });
+        document.getElementById('checkoutBtn').addEventListener('click', placeAllOrders);
+        
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('tpot_majalisa_session');
+            window.location.href = 'MajalisaLogin.html';
+        });
+        
+        // Filter tabs
+        document.querySelectorAll('#orderFilterTabs .filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#orderFilterTabs .filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentOrderFilter = btn.dataset.status;
+                renderOrders();
+            });
+        });
+        
+        // Edit modal
+        document.getElementById('editSettingsBtn').addEventListener('click', () => {
+            document.getElementById('editMajalisaName').value = currentMajalisaData.majalisaName || '';
+            document.getElementById('editLocation').value = currentMajalisaData.location || '';
+            document.getElementById('editGroupType').value = currentMajalisaData.groupType || 'Friends & Family';
+            document.getElementById('editPhone').value = currentMajalisaData.contactPhone || '';
+            document.getElementById('editEmail').value = currentMajalisaData.contactEmail || '';
+            document.getElementById('editMajalisaModal').classList.add('active');
+        });
+        
+        document.getElementById('closeEditModal').addEventListener('click', () => {
+            document.getElementById('editMajalisaModal').classList.remove('active');
+        });
+        
+        document.getElementById('editMajalisaForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            updateMajalisaInfo({
+                majalisaName: document.getElementById('editMajalisaName').value.trim(),
+                location: document.getElementById('editLocation').value.trim(),
+                groupType: document.getElementById('editGroupType').value,
+                contactPhone: document.getElementById('editPhone').value.trim(),
+                contactEmail: document.getElementById('editEmail').value.trim()
+            });
+        });
+        
+        // Close modal on background click
+        document.getElementById('editMajalisaModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('editMajalisaModal')) {
+                document.getElementById('editMajalisaModal').classList.remove('active');
+            }
+        });
+        document.getElementById('cartModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('cartModal')) {
+                document.getElementById('cartModal').classList.remove('active');
+            }
+        });
+        
+        // Initialize
+        async function init() {
+            await loadMajalisaData();
+            await loadGallery();
+            loadSettings();
+            setupNavigation();
+        }
+        
+        init();
+    </script>
+</body>
+</html>

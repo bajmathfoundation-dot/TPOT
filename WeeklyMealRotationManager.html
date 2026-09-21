@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T-POT Admin | Weekly Meal Rotation Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #FFFBF5 0%, #F5EFE6 100%);
+            color: #5D4037;
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .logo-icon {
+            font-size: 3rem;
+            color: #A1887F;
+        }
+        
+        .logo-text {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #8D6E63;
+        }
+        
+        .logo-sub {
+            color: #A1887F;
+            font-size: 1rem;
+        }
+        
+        .page-title {
+            font-size: 2rem;
+            color: #8D6E63;
+            margin-top: 10px;
+        }
+        
+        .page-title i {
+            color: #A1887F;
+            margin-right: 10px;
+        }
+        
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1);
+            border: 1px solid #D7CCC8;
+        }
+        
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #A1887F;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #8D6E63;
+        }
+        
+        /* Days Grid */
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .day-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(141, 110, 99, 0.1);
+            border: 1px solid #D7CCC8;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .day-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(141, 110, 99, 0.15);
+        }
+        
+        .day-header {
+            background: linear-gradient(135deg, #A1887F, #8D6E63);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .day-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .day-icon {
+            font-size: 2rem;
+        }
+        
+        .meal-list {
+            padding: 20px;
+            min-height: 280px;
+            background: #FFFBF5;
+        }
+        
+        .meal-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            background: #F5EFE6;
+            border-radius: 12px;
+            border-left: 4px solid #A1887F;
+            transition: all 0.2s;
+        }
+        
+        .meal-item:hover {
+            background: #EFE4D8;
+            transform: translateX(3px);
+        }
+        
+        .meal-text {
+            flex: 1;
+            color: #5D4037;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .meal-emoji {
+            font-size: 1.3rem;
+        }
+        
+        .meal-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .meal-actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 8px 10px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .edit-meal {
+            color: #8D6E63;
+        }
+        
+        .edit-meal:hover {
+            background-color: #D7CCC8;
+        }
+        
+        .delete-meal {
+            color: #c62828;
+        }
+        
+        .delete-meal:hover {
+            background-color: #ffcdd2;
+        }
+        
+        .add-meal-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #F5EFE6;
+            border: 2px dashed #D7CCC8;
+            border-radius: 12px;
+            color: #8D6E63;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .add-meal-btn:hover {
+            background-color: #D7CCC8;
+            border-color: #A1887F;
+            color: #5D4037;
+        }
+        
+        .empty-meals {
+            text-align: center;
+            padding: 40px 20px;
+            color: #A1887F;
+            font-style: italic;
+            background: #F5EFE6;
+            border-radius: 12px;
+        }
+        
+        /* Bulk Actions */
+        .bulk-actions {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-top: 20px;
+            border: 1px solid #D7CCC8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .bulk-title {
+            color: #8D6E63;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .bulk-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .bulk-btn {
+            padding: 10px 22px;
+            border-radius: 40px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .bulk-btn.save {
+            background-color: #A1887F;
+            color: white;
+        }
+        
+        .bulk-btn.save:hover {
+            background-color: #8D6E63;
+            transform: scale(1.02);
+        }
+        
+        .bulk-btn.reset {
+            background-color: #F5EFE6;
+            color: #8D6E63;
+            border: 1px solid #D7CCC8;
+        }
+        
+        .bulk-btn.reset:hover {
+            background-color: #D7CCC8;
+        }
+        
+        /* Preview Section */
+        .preview-section {
+            margin-top: 30px;
+            background: linear-gradient(135deg, #FFFBF5, #F5EFE6);
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid #D7CCC8;
+        }
+        
+        .preview-title {
+            color: #8D6E63;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+        
+        .preview-day {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            border: 1px solid #D7CCC8;
+            transition: all 0.2s;
+        }
+        
+        .preview-day:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .preview-day-name {
+            font-weight: 700;
+            color: #8D6E63;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #D7CCC8;
+            font-size: 1rem;
+        }
+        
+        .preview-meals {
+            font-size: 0.85rem;
+            color: #5D4037;
+        }
+        
+        .preview-meal-item {
+            padding: 5px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(45, 27, 21, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal {
+            background: white;
+            border-radius: 25px;
+            width: 90%;
+            max-width: 500px;
+            padding: 35px;
+            animation: modalPop 0.3s ease;
+        }
+        
+        @keyframes modalPop {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #D7CCC8;
+        }
+        
+        .modal-header h2 {
+            color: #8D6E63;
+            font-size: 1.5rem;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #A1887F;
+            transition: 0.2s;
+        }
+        
+        .modal-close:hover {
+            color: #5D4037;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #8D6E63;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #D7CCC8;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: 0.2s;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #A1887F;
+            box-shadow: 0 0 0 3px rgba(161, 136, 127, 0.1);
+        }
+        
+        select.form-control {
+            cursor: pointer;
+            background-color: white;
+        }
+        
+        .btn-save {
+            background: linear-gradient(135deg, #A1887F, #8D6E63);
+            color: white;
+            border: none;
+            padding: 16px;
+            width: 100%;
+            border-radius: 40px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(141, 110, 99, 0.3);
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #2E7D32;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 50px;
+            z-index: 1100;
+            opacity: 0;
+            transition: opacity 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        
+        .toast.show {
+            opacity: 1;
+        }
+        
+        .toast.error {
+            background: #c62828;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #A1887F;
+            font-size: 1.2rem;
+        }
+        
+        .loading i {
+            margin-right: 10px;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #D7CCC8;
+            color: #A1887F;
+            font-size: 0.85rem;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 20px 15px;
+            }
+            .days-grid {
+                grid-template-columns: 1fr;
+            }
+            .bulk-actions {
+                flex-direction: column;
+                text-align: center;
+            }
+            .preview-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+            .stat-card {
+                padding: 10px 20px;
+            }
+            .stat-number {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">
+            <i class="fas fa-utensil-spoon logo-icon"></i>
+            <span class="logo-text">T-POT</span>
+        </div>
+        <div class="logo-sub">Kitchen Admin</div>
+        <h1 class="page-title"><i class="fas fa-calendar-week"></i> Weekly Meal Rotation Manager</h1>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+        <div class="stat-card">
+            <div class="stat-number" id="totalMeals">0</div>
+            <div class="stat-label">Total Meals</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="activeDays">0</div>
+            <div class="stat-label">Days with Meals</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="lastSaved">—</div>
+            <div class="stat-label">Status</div>
+        </div>
+    </div>
+
+    <!-- Days Grid -->
+    <div id="daysContainer" class="days-grid">
+        <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading meal rotation...</div>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div class="bulk-actions">
+        <div class="bulk-title">
+            <i class="fas fa-tools"></i> Bulk Actions
+        </div>
+        <div class="bulk-buttons">
+            <button class="bulk-btn save" id="saveAllBtn"><i class="fas fa-save"></i> Save All Changes</button>
+            <button class="bulk-btn reset" id="resetDefaultBtn"><i class="fas fa-undo-alt"></i> Reset to Default Menu</button>
+            <button class="bulk-btn reset" id="refreshBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
+    </div>
+
+    <!-- Live Preview -->
+    <div class="preview-section">
+        <div class="preview-title">
+            <i class="fas fa-eye"></i> Live Preview (How students see it)
+        </div>
+        <div id="previewContainer" class="preview-grid">
+            <!-- Dynamic preview -->
+        </div>
+    </div>
+
+    <div class="footer">
+        <i class="fas fa-shield-alt"></i> The Last Battle - Meal Management System
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="mealModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="modalTitle">Add Meal</h2>
+            <button class="modal-close" id="closeModal">&times;</button>
+        </div>
+        <form id="mealForm">
+            <input type="hidden" id="currentDay">
+            <input type="hidden" id="mealIndex">
+            <div class="form-group">
+                <label class="form-label">🍽️ Meal Description *</label>
+                <input type="text" class="form-control" id="mealDescription" required placeholder="e.g., Pounded Yam + Egusi">
+            </div>
+            <div class="form-group">
+                <label class="form-label">🎨 Meal Icon</label>
+                <select class="form-control" id="mealIcon">
+                    <option value="🍲">🍲 Soup/Stew</option>
+                    <option value="🍚">🍚 Rice Dish</option>
+                    <option value="🍝">🍝 Pasta</option>
+                    <option value="🍗">🍗 Chicken/Meat</option>
+                    <option value="🐟">🐟 Fish</option>
+                    <option value="🥘">🥘 One-pot</option>
+                    <option value="🌯">🌯 Wrap/Roll</option>
+                    <option value="🍳">🍳 Breakfast</option>
+                    <option value="🥗">🥗 Salad</option>
+                    <option value="🍕">🍕 Pizza/Snack</option>
+                    <option value="☕">☕ Tea/Drink</option>
+                    <option value="🍰">🍰 Dessert</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-save"><i class="fas fa-check-circle"></i> Save Meal</button>
+        </form>
+    </div>
+</div>
+
+<div id="toast" class="toast"><i class="fas fa-check-circle"></i> <span id="toastMsg"></span></div>
+
+<script>
+    // Firebase Configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyDRKWldl8_NSAek4na-H-SQWjUBrxt26iI",
+        authDomain: "tpot.com.ng",
+        projectId: "t-pot-60c3d",
+        storageBucket: "t-pot-60c3d.firebasestorage.app",
+        messagingSenderId: "272048176539",
+        appId: "1:272048176539:web:d73d09a39171c8ef12753e"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    
+    const mealRotationCollection = db.collection('mealRotation');
+    const DOC_ID = 'weeklyMealRotation';
+    
+    // Days configuration
+    const daysOfWeek = [
+        { key: 'monday', name: 'Monday', icon: 'fas fa-utensil-spoon', defaultMeals: ['Pounded Yam + Egusi', 'Jollof Rice + Chicken', 'Vegetable Soup + Semo'] },
+        { key: 'tuesday', name: 'Tuesday', icon: 'fas fa-drumstick-bite', defaultMeals: ['Fried Rice + Beef', 'Amala + Ewedu', 'Beans + Plantain'] },
+        { key: 'wednesday', name: 'Wednesday', icon: 'fas fa-bowl-food', defaultMeals: ['Spaghetti Bolognese', 'Okro Soup + Fufu', 'Yam & Egg Sauce'] },
+        { key: 'thursday', name: 'Thursday', icon: 'fas fa-fish', defaultMeals: ['Pepper Soup + Semo', 'Coconut Rice + Fish', 'Masa + Soup'] },
+        { key: 'friday', name: 'Friday', icon: 'fas fa-pizza-slice', defaultMeals: ['SPECIAL: Loaded Chips', 'Chicken & Chips', 'Shawarma Wrap'] },
+        { key: 'saturday', name: 'Saturday', icon: 'fas fa-ice-cream', defaultMeals: ['Breakfast: Tea & Bread', 'Lunch: Rice/Stew Combo', 'Dinner: Light Snacks'] },
+        { key: 'sunday', name: 'Sunday', icon: 'fas fa-coffee', defaultMeals: ['Morning: Hot Tea + Puff Puff', 'Afternoon: Special Sunday Rice', 'Evening: Small Chops'] }
+    ];
+    
+    let rotationData = {};
+    let isSaving = false;
+    
+    // Helper: Get icon for meal text
+    function getIconForMeal(meal) {
+        if (meal.includes('Rice')) return '🍚';
+        if (meal.includes('Soup') || meal.includes('Egusi') || meal.includes('Okro')) return '🍲';
+        if (meal.includes('Chicken') || meal.includes('Beef')) return '🍗';
+        if (meal.includes('Fish')) return '🐟';
+        if (meal.includes('Pasta') || meal.includes('Spaghetti')) return '🍝';
+        if (meal.includes('Tea') || meal.includes('Coffee') || meal.includes('Puff')) return '☕';
+        if (meal.includes('Chips') || meal.includes('Shawarma')) return '🌯';
+        if (meal.includes('Yam')) return '🍠';
+        if (meal.includes('Plantain')) return '🍌';
+        return '🍽️';
+    }
+    
+    // Initialize default structure
+    function initDefaultData() {
+        for (const day of daysOfWeek) {
+            rotationData[day.key] = day.defaultMeals.map(meal => ({ text: meal, icon: getIconForMeal(meal) }));
+        }
+    }
+    
+    // Load from Firebase
+    async function loadMealRotation() {
+        const container = document.getElementById('daysContainer');
+        container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading meal rotation...</div>';
+        
+        try {
+            const doc = await mealRotationCollection.doc(DOC_ID).get();
+            
+            if (!doc.exists) {
+                initDefaultData();
+                await saveAllToDatabase(false);
+                renderAll();
+                showToast('Default meal rotation created!', 'success');
+                updateStats();
+                return;
+            }
+            
+            const data = doc.data();
+            // Merge with defaults to ensure all days exist
+            rotationData = {};
+            for (const day of daysOfWeek) {
+                if (data[day.key] && Array.isArray(data[day.key])) {
+                    rotationData[day.key] = data[day.key];
+                } else {
+                    rotationData[day.key] = day.defaultMeals.map(meal => ({ text: meal, icon: getIconForMeal(meal) }));
+                }
+            }
+            
+            renderAll();
+            updateStats();
+            showToast('Loaded from database', 'success');
+            document.getElementById('lastSaved').textContent = 'Loaded';
+        } catch (error) {
+            console.error('Error loading:', error);
+            initDefaultData();
+            renderAll();
+            updateStats();
+            showToast('Using local data - Firebase error', 'error');
+        }
+    }
+    
+    function renderAll() {
+        renderDays();
+        renderPreview();
+    }
+    
+    function renderDays() {
+        const container = document.getElementById('daysContainer');
+        let html = '';
+        
+        for (const day of daysOfWeek) {
+            const meals = rotationData[day.key] || [];
+            
+            html += `
+                <div class="day-card" data-day="${day.key}">
+                    <div class="day-header">
+                        <span class="day-name">${day.name}</span>
+                        <span class="day-icon"><i class="${day.icon}"></i></span>
+                    </div>
+                    <div class="meal-list" id="meal-list-${day.key}">
+                        ${meals.length === 0 ? '<div class="empty-meals"><i class="fas fa-utensils"></i> No meals added yet</div>' : ''}
+                        ${meals.map((meal, idx) => `
+                            <div class="meal-item" data-index="${idx}">
+                                <div class="meal-text">
+                                    <span class="meal-emoji">${meal.icon || '🍽️'}</span>
+                                    <span>${escapeHtml(meal.text)}</span>
+                                </div>
+                                <div class="meal-actions">
+                                    <button class="edit-meal" onclick="openEditMeal('${day.key}', ${idx})"><i class="fas fa-edit"></i></button>
+                                    <button class="delete-meal" onclick="deleteMeal('${day.key}', ${idx})"><i class="fas fa-trash-alt"></i></button>
+                                </div>
+                            </div>
+                        `).join('')}
+                        <button class="add-meal-btn" onclick="openAddMeal('${day.key}')">
+                            <i class="fas fa-plus-circle"></i> Add Meal
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        container.innerHTML = html;
+    }
+    
+    function renderPreview() {
+        const container = document.getElementById('previewContainer');
+        let html = '';
+        
+        for (const day of daysOfWeek) {
+            const meals = rotationData[day.key] || [];
+            html += `
+                <div class="preview-day">
+                    <div class="preview-day-name">${day.name}</div>
+                    <div class="preview-meals">
+                        ${meals.slice(0, 3).map(meal => `<div class="preview-meal-item"><span>${meal.icon || '🍽️'}</span> <span>${escapeHtml(meal.text.substring(0, 35))}${meal.text.length > 35 ? '...' : ''}</span></div>`).join('')}
+                        ${meals.length > 3 ? `<div class="preview-meal-item" style="color:#A1887F; font-size:0.75rem;"><i class="fas fa-ellipsis-h"></i> +${meals.length - 3} more</div>` : ''}
+                        ${meals.length === 0 ? '<div style="color:#D7CCC8; font-size:0.75rem;">— No meals —</div>' : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        container.innerHTML = html;
+    }
+    
+    function updateStats() {
+        let totalMeals = 0;
+        let activeDays = 0;
+        
+        for (const day of daysOfWeek) {
+            const meals = rotationData[day.key] || [];
+            totalMeals += meals.length;
+            if (meals.length > 0) activeDays++;
+        }
+        
+        document.getElementById('totalMeals').textContent = totalMeals;
+        document.getElementById('activeDays').textContent = `${activeDays}/7`;
+    }
+    
+    // Modal handlers
+    let currentEditingDay = null;
+    let currentEditingIndex = null;
+    
+    window.openAddMeal = (dayKey) => {
+        currentEditingDay = dayKey;
+        currentEditingIndex = null;
+        document.getElementById('modalTitle').textContent = '➕ Add New Meal';
+        document.getElementById('mealDescription').value = '';
+        document.getElementById('mealIcon').value = '🍲';
+        document.getElementById('currentDay').value = dayKey;
+        document.getElementById('mealIndex').value = '';
+        document.getElementById('mealModal').classList.add('active');
+    };
+    
+    window.openEditMeal = (dayKey, index) => {
+        currentEditingDay = dayKey;
+        currentEditingIndex = index;
+        const meal = rotationData[dayKey][index];
+        document.getElementById('modalTitle').textContent = '✏️ Edit Meal';
+        document.getElementById('mealDescription').value = meal.text;
+        document.getElementById('mealIcon').value = meal.icon || '🍲';
+        document.getElementById('currentDay').value = dayKey;
+        document.getElementById('mealIndex').value = index;
+        document.getElementById('mealModal').classList.add('active');
+    };
+    
+    function closeModal() {
+        document.getElementById('mealModal').classList.remove('active');
+        currentEditingDay = null;
+        currentEditingIndex = null;
+    }
+    
+    function saveMeal(e) {
+        e.preventDefault();
+        const dayKey = document.getElementById('currentDay').value;
+        const mealText = document.getElementById('mealDescription').value.trim();
+        const mealIcon = document.getElementById('mealIcon').value;
+        const editIndex = document.getElementById('mealIndex').value;
+        
+        if (!mealText) {
+            showToast('Please enter a meal description', 'error');
+            return;
+        }
+        
+        if (!rotationData[dayKey]) {
+            rotationData[dayKey] = [];
+        }
+        
+        if (editIndex !== '') {
+            rotationData[dayKey][parseInt(editIndex)] = { text: mealText, icon: mealIcon };
+            showToast('Meal updated', 'success');
+        } else {
+            rotationData[dayKey].push({ text: mealText, icon: mealIcon });
+            showToast('Meal added', 'success');
+        }
+        
+        renderAll();
+        updateStats();
+        closeModal();
+    }
+    
+    window.deleteMeal = (dayKey, index) => {
+        if (confirm('Remove this meal from the rotation?')) {
+            rotationData[dayKey].splice(index, 1);
+            renderAll();
+            updateStats();
+            showToast('Meal removed', 'success');
+        }
+    };
+    
+    async function saveAllToDatabase(showToastMsg = true) {
+        if (isSaving) return;
+        isSaving = true;
+        
+        if (showToastMsg) {
+            showToast('Saving to database...', 'info');
+        }
+        
+        try {
+            await mealRotationCollection.doc(DOC_ID).set(rotationData);
+            document.getElementById('lastSaved').textContent = 'Saved';
+            if (showToastMsg) {
+                showToast('All changes saved successfully!', 'success');
+            }
+        } catch (error) {
+            console.error('Error saving:', error);
+            showToast('Error saving: ' + error.message, 'error');
+            document.getElementById('lastSaved').textContent = 'Error';
+        } finally {
+            isSaving = false;
+        }
+    }
+    
+    async function resetToDefault() {
+        if (confirm('⚠️ Reset all meals to the default menu? This will overwrite ALL current meals.')) {
+            for (const day of daysOfWeek) {
+                rotationData[day.key] = day.defaultMeals.map(meal => ({ text: meal, icon: getIconForMeal(meal) }));
+            }
+            renderAll();
+            updateStats();
+            await saveAllToDatabase(true);
+            showToast('Reset to default menu complete!', 'success');
+        }
+    }
+    
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const toastMsgSpan = document.getElementById('toastMsg');
+        toastMsgSpan.textContent = message;
+        toast.classList.remove('error');
+        if (type === 'error') toast.classList.add('error');
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+    
+    // Event listeners
+    document.getElementById('closeModal').addEventListener('click', closeModal);
+    document.getElementById('mealModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('mealModal')) closeModal();
+    });
+    document.getElementById('mealForm').addEventListener('submit', saveMeal);
+    document.getElementById('saveAllBtn').addEventListener('click', () => saveAllToDatabase(true));
+    document.getElementById('resetDefaultBtn').addEventListener('click', resetToDefault);
+    document.getElementById('refreshBtn').addEventListener('click', () => loadMealRotation());
+    
+    // Load on page start
+    loadMealRotation();
+</script>
+</body>
+</html>

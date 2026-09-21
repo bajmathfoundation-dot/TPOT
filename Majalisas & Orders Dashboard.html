@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>TPOT Shop | Majalisas & Orders Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            background: #f5f0ea;
+            color: #3a2a1f;
+        }
+
+        .header {
+            background: #2c3e2f;
+            color: #fef7e0;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .logo h1 {
+            font-size: 1.6rem;
+            font-weight: 600;
+        }
+
+        .logo span {
+            color: #f4b942;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: #fef7e0;
+            text-decoration: none;
+            font-weight: 500;
+            transition: 0.2s;
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.8rem;
+            color: #2c3e2f;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.2rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid #e8dfd4;
+        }
+
+        .stat-card i {
+            font-size: 1.8rem;
+            color: #b8652e;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .stat-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2c3e2f;
+        }
+
+        .stat-card .stat-label {
+            color: #7a6a5a;
+            font-size: 0.8rem;
+        }
+
+        .search-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            background: white;
+            padding: 1rem;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .search-input-wrapper {
+            flex: 2;
+            min-width: 200px;
+            position: relative;
+        }
+
+        .search-input-wrapper i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #b8652e;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 15px 12px 40px;
+            border: 1.5px solid #e2dcd2;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: #b8652e;
+        }
+
+        .filter-group {
+            min-width: 150px;
+        }
+
+        .filter-select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1.5px solid #e2dcd2;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            background: white;
+            cursor: pointer;
+        }
+
+        .refresh-btn {
+            background: #b8652e;
+            color: white;
+            border: none;
+            padding: 0 1.5rem;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .majalisa-table-wrapper {
+            background: white;
+            border-radius: 24px;
+            overflow-x: auto;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+        }
+
+        .majalisa-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+        }
+
+        .majalisa-table th {
+            background: #2c3e2f;
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .majalisa-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #f0e6dc;
+            vertical-align: middle;
+        }
+
+        .majalisa-table tr:hover {
+            background: #fefaf5;
+        }
+
+        .profile-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .profile-badge.no-profile {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .order-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .order-count {
+            font-weight: 700;
+            color: #b8652e;
+        }
+
+        .total-spent {
+            font-size: 0.8rem;
+            color: #2c3e2f;
+        }
+
+        .view-orders-btn, .view-details-btn {
+            background: #b8652e;
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            font-weight: 500;
+            margin: 0.2rem;
+            transition: 0.2s;
+        }
+
+        .view-details-btn {
+            background: #6b8c5c;
+        }
+
+        .view-orders-btn:hover {
+            background: #2c3e2f;
+        }
+
+        .view-details-btn:hover {
+            background: #2c3e2f;
+        }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.2s;
+        }
+
+        .modal.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 28px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 1.8rem;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #f0dbc8;
+        }
+
+        .modal-header h2 {
+            color: #2c3e2f;
+            font-size: 1.3rem;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #7a6a5a;
+        }
+
+        .detail-row {
+            display: flex;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid #f0e6dc;
+        }
+
+        .detail-label {
+            width: 120px;
+            font-weight: 600;
+            color: #b8652e;
+        }
+
+        .detail-value {
+            flex: 1;
+        }
+
+        .orders-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .order-item {
+            background: #fefaf5;
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 0.8rem;
+            border: 1px solid #f0dbc8;
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 0.5rem;
+        }
+
+        .order-status {
+            padding: 0.2rem 0.8rem;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .status-served {
+            background: #c8e6c9;
+            color: #1e5a2a;
+        }
+
+        .status-pending {
+            background: #ffe0b2;
+            color: #bf5b00;
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 3rem;
+            color: #a1887f;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #a1887f;
+        }
+
+        footer {
+            background: #e8dfd4;
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            color: #6b5a4a;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .search-bar { flex-direction: column; }
+            .detail-label { width: 100px; font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <h1><span>🧆</span> TPOT Shop · Majalisas & Orders</h1>
+        </div>
+        <div class="nav-links">
+            <a href="index.html"><i class="fas fa-home"></i> Home</a>
+            <a href="MajalisaLogin.html"><i class="fas fa-sign-in-alt"></i> Majalisa Login</a>
+            <a href="CreateMajalisa.html"><i class="fas fa-plus-circle"></i> Create Majalisa</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1><i class="fas fa-chart-line" style="color: #b8652e;"></i> Majalisas Order Dashboard</h1>
+            <p>View all majalisas with their order history, total orders, and spending</p>
+        </div>
+
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <i class="fas fa-users"></i>
+                <div class="stat-number" id="totalMajalisas">0</div>
+                <div class="stat-label">Total Majalisas</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-shopping-bag"></i>
+                <div class="stat-number" id="totalOrders">0</div>
+                <div class="stat-label">Total Orders</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-money-bill-wave"></i>
+                <div class="stat-number" id="totalRevenue">₦0</div>
+                <div class="stat-label">Total Revenue</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-check-circle"></i>
+                <div class="stat-number" id="verifiedMajalisas">0</div>
+                <div class="stat-label">Verified Majalisas</div>
+            </div>
+        </div>
+
+        <div class="search-bar">
+            <div class="search-input-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search by majalisa name, location, or leader...">
+            </div>
+            <div class="filter-group">
+                <select id="groupTypeFilter" class="filter-select">
+                    <option value="all">All Group Types</option>
+                    <option value="Friends & Family">Friends & Family</option>
+                    <option value="Community">Community</option>
+                    <option value="Sports / Hobby">Sports / Hobby</option>
+                    <option value="Professional">Professional</option>
+                </select>
+            </div>
+            <button id="refreshBtn" class="refresh-btn"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
+
+        <div class="majalisa-table-wrapper">
+            <table class="majalisa-table">
+                <thead>
+                    <tr>
+                        <th>Majalisa Name</th>
+                        <th>Location</th>
+                        <th>Group Type</th>
+                        <th>Leader</th>
+                        <th>Contact</th>
+                        <th>Profile</th>
+                        <th>Orders Summary</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="majalisaTableBody">
+                    <tr><td colspan="8" class="loading-state"><i class="fas fa-spinner fa-spin"></i> Loading majalisas...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Majalisa Details Modal -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-info-circle"></i> Majalisa Details</h2>
+                <button class="close-modal" id="closeDetailsModalBtn">&times;</button>
+            </div>
+            <div id="detailsModalContent"></div>
+        </div>
+    </div>
+
+    <!-- Orders Modal -->
+    <div id="ordersModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-shopping-bag"></i> <span id="ordersModalTitle">Orders</span></h2>
+                <button class="close-modal" id="closeOrdersModalBtn">&times;</button>
+            </div>
+            <div id="ordersModalContent" class="orders-list"></div>
+        </div>
+    </div>
+
+    <footer>
+        <p>🍜 TPOT Shop · Track majalisa orders, manage community dining</p>
+    </footer>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDRKWldl8_NSAek4na-H-SQWjUBrxt26iI",
+            authDomain: "tpot.com.ng",
+            projectId: "t-pot-60c3d",
+            storageBucket: "t-pot-60c3d.firebasestorage.app",
+            messagingSenderId: "272048176539",
+            appId: "1:272048176539:web:d73d09a39171c8ef12753e"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let allMajalisas = [];
+        let ordersByMajalisa = new Map(); // majalisaId -> array of orders
+        let unsubscribeMajalisas = null;
+        let unsubscribeOrders = null;
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        function formatDate(timestamp) {
+            if (!timestamp) return 'N/A';
+            try {
+                const date = timestamp.toDate();
+                return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } catch(e) {
+                return 'N/A';
+            }
+        }
+
+        // Calculate order stats for a majalisa
+        function getOrderStats(majalisaId) {
+            const orders = ordersByMajalisa.get(majalisaId) || [];
+            const totalOrders = orders.length;
+            const totalSpent = orders.reduce((sum, order) => sum + (order.totalPrice || 0), 0);
+            const pendingOrders = orders.filter(o => o.status === 'pending').length;
+            const servedOrders = orders.filter(o => o.status === 'served').length;
+            return { totalOrders, totalSpent, pendingOrders, servedOrders, orders };
+        }
+
+        // Update global stats
+        function updateGlobalStats() {
+            const totalMajalisas = allMajalisas.length;
+            let totalOrdersAll = 0;
+            let totalRevenueAll = 0;
+            
+            for (const majalisa of allMajalisas) {
+                const stats = getOrderStats(majalisa.id);
+                totalOrdersAll += stats.totalOrders;
+                totalRevenueAll += stats.totalSpent;
+            }
+            
+            const verified = allMajalisas.filter(m => m.hasProfile === true).length;
+            
+            document.getElementById('totalMajalisas').innerText = totalMajalisas;
+            document.getElementById('totalOrders').innerText = totalOrdersAll;
+            document.getElementById('totalRevenue').innerHTML = `₦${totalRevenueAll.toLocaleString()}`;
+            document.getElementById('verifiedMajalisas').innerText = verified;
+        }
+
+        // Render main table
+        function renderTable() {
+            const tbody = document.getElementById('majalisaTableBody');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const groupTypeFilter = document.getElementById('groupTypeFilter').value;
+            
+            let filtered = [...allMajalisas];
+            
+            if (searchTerm) {
+                filtered = filtered.filter(m => 
+                    (m.majalisaName && m.majalisaName.toLowerCase().includes(searchTerm)) ||
+                    (m.location && m.location.toLowerCase().includes(searchTerm)) ||
+                    (m.groupLeader && m.groupLeader.toLowerCase().includes(searchTerm)) ||
+                    (m.leader && m.leader.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            if (groupTypeFilter !== 'all') {
+                filtered = filtered.filter(m => m.groupType === groupTypeFilter);
+            }
+            
+            if (!filtered.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><i class="fas fa-inbox"></i><br>No majalisas found</td></tr>';
+                updateGlobalStats();
+                return;
+            }
+            
+            tbody.innerHTML = filtered.map(majalisa => {
+                const stats = getOrderStats(majalisa.id);
+                const hasProfile = majalisa.hasProfile === true;
+                const profileHtml = hasProfile 
+                    ? '<span class="profile-badge"><i class="fas fa-check-circle"></i> Verified</span>'
+                    : '<span class="profile-badge no-profile"><i class="fas fa-clock"></i> Pending</span>';
+                
+                let contactHtml = '';
+                if (majalisa.contactPhone) contactHtml += `<i class="fas fa-phone"></i> ${escapeHtml(majalisa.contactPhone)}<br>`;
+                if (majalisa.contactEmail) contactHtml += `<i class="fas fa-envelope"></i> ${escapeHtml(majalisa.contactEmail)}`;
+                if (!contactHtml) contactHtml = '<span style="color: #a1887f;">—</span>';
+                
+                return `
+                    <tr>
+                        <td><strong>${escapeHtml(majalisa.majalisaName || 'Unnamed')}</strong></td>
+                        <td><i class="fas fa-map-pin" style="color: #b8652e;"></i> ${escapeHtml(majalisa.location || '—')}</td>
+                        <td><span style="background: #f0dbc8; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem;">${escapeHtml(majalisa.groupType || '—')}</span></td>
+                        <td>${escapeHtml(majalisa.groupLeader || majalisa.leader || '—')}</td>
+                        <td style="font-size: 0.8rem;">${contactHtml}</td>
+                        <td>${profileHtml}</td>
+                        <td class="order-stats">
+                            <span class="order-count">📦 ${stats.totalOrders} orders</span>
+                            <span class="total-spent">💰 ₦${stats.totalSpent.toLocaleString()}</span>
+                            <span style="font-size: 0.7rem;">✅ ${stats.servedOrders} served | ⏳ ${stats.pendingOrders} pending</span>
+                        </td>
+                        <td>
+                            <button class="view-details-btn" data-id="${majalisa.id}"><i class="fas fa-info-circle"></i> Details</button>
+                            <button class="view-orders-btn" data-id="${majalisa.id}" data-name="${escapeHtml(majalisa.majalisaName)}"><i class="fas fa-shopping-bag"></i> Orders</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            // Add event listeners
+            document.querySelectorAll('.view-details-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.id;
+                    const majalisa = allMajalisas.find(m => m.id === id);
+                    if (majalisa) showDetailsModal(majalisa);
+                });
+            });
+            
+            document.querySelectorAll('.view-orders-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.id;
+                    const name = btn.dataset.name;
+                    const stats = getOrderStats(id);
+                    showOrdersModal(name, stats.orders);
+                });
+            });
+            
+            updateGlobalStats();
+        }
+
+        // Show majalisa details modal
+        function showDetailsModal(majalisa) {
+            const modal = document.getElementById('detailsModal');
+            const content = document.getElementById('detailsModalContent');
+            const stats = getOrderStats(majalisa.id);
+            
+            const hasProfile = majalisa.hasProfile === true;
+            const statusText = hasProfile ? 'Verified (Profile Created)' : 'Pending (No Profile Yet)';
+            const statusClass = hasProfile ? 'status-served' : 'status-pending';
+            
+            content.innerHTML = `
+                <div class="detail-row"><div class="detail-label"><i class="fas fa-tag"></i> Name</div><div class="detail-value"><strong>${escapeHtml(majalisa.majalisaName || '—')}</strong></div></div>
+                <div class="detail-row"><div class="detail-label"><i class="fas fa-map-marker-alt"></i> Location</div><div class="detail-value">${escapeHtml(majalisa.location || '—')}</div></div>
+                <div class="detail-row"><div class="detail-label"><i class="fas fa-users"></i> Group Type</div><div class="detail-value">${escapeHtml(majalisa.groupType || '—')}</div></div>
+                <div class="detail-row"><div class="detail-label"><i class="fas fa-user"></i> Leader</div><div class="detail-value">${escapeHtml(majalisa.groupLeader || majalisa.leader || '—')}</div></div>
+                <div class="detail-row"><div class="detail-label"><i class="fas fa-phone"></i> Phone</div><div class="detail-value">${escapeHtml(majalisa.contactPhone || 'Not provided')}</div></div>
+                <div class="detail-row"><div class="detail-label"><i class="fas fa-envelope"></i> Email</div><div class="detail-value">${escapeHtml(majalisa.contactEmail || 'Not provided')}</div></div>
+                <div class="detail-row"><div class="detail-label"><i class="fas fa-calendar"></i> Created</div><div class="detail-value">${formatDate(majalisa.createdAt)}</div></div>
+                <div class="detail-row"><div class="detail-label"><i class="fas fa-shield-alt"></i> Status</div><div class="detail-value"><span class="status-badge ${statusClass}" style="padding:0.2rem 0.8rem;border-radius:40px;">${statusText}</span></div></div>
+                <div class="detail-row"><div class="detail-label"><i class="fas fa-chart-line"></i> Orders</div><div class="detail-value"><strong>${stats.totalOrders}</strong> total orders · <strong>₦${stats.totalSpent.toLocaleString()}</strong> spent</div></div>
+                ${majalisa.notes ? `<div class="detail-row"><div class="detail-label"><i class="fas fa-sticky-note"></i> Notes</div><div class="detail-value">${escapeHtml(majalisa.notes)}</div></div>` : ''}
+                ${majalisa.meetingDay ? `<div class="detail-row"><div class="detail-label"><i class="fas fa-calendar-week"></i> Meeting</div><div class="detail-value">${escapeHtml(majalisa.meetingDay)} ${majalisa.meetingTime ? 'at ' + escapeHtml(majalisa.meetingTime) : ''}</div></div>` : ''}
+            `;
+            modal.classList.add('active');
+        }
+
+        // Show orders modal
+        function showOrdersModal(majalisaName, orders) {
+            const modal = document.getElementById('ordersModal');
+            const title = document.getElementById('ordersModalTitle');
+            const content = document.getElementById('ordersModalContent');
+            
+            title.innerHTML = `<i class="fas fa-shopping-bag"></i> ${escapeHtml(majalisaName)} - Orders`;
+            
+            if (!orders.length) {
+                content.innerHTML = '<div class="empty-state"><i class="fas fa-shopping-cart"></i><br>No orders placed yet</div>';
+                modal.classList.add('active');
+                return;
+            }
+            
+            // Sort by date descending
+            const sortedOrders = [...orders].sort((a, b) => {
+                const dateA = a.orderDate?.toDate?.()?.getTime() || 0;
+                const dateB = b.orderDate?.toDate?.()?.getTime() || 0;
+                return dateB - dateA;
+            });
+            
+            content.innerHTML = sortedOrders.map(order => `
+                <div class="order-item">
+                    <div class="order-header">
+                        <strong>${escapeHtml(order.itemName)}</strong>
+                        <span class="order-status ${order.status === 'served' ? 'status-served' : 'status-pending'}">
+                            ${order.status?.toUpperCase() || 'PENDING'}
+                        </span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
+                        <span><i class="fas fa-box"></i> Quantity: ${order.quantity || 1}</span>
+                        <span><i class="fas fa-money-bill-wave"></i> ₦${(order.totalPrice || 0).toLocaleString()}</span>
+                        <span style="font-size: 0.7rem; color: #7a6a5a;"><i class="fas fa-calendar"></i> ${formatDate(order.orderDate)}</span>
+                    </div>
+                </div>
+            `).join('');
+            
+            modal.classList.add('active');
+        }
+
+        // Load all majalisas with realtime listener
+        function loadMajalisas() {
+            if (unsubscribeMajalisas) unsubscribeMajalisas();
+            
+            unsubscribeMajalisas = db.collection('majalisa')
+                .orderBy('createdAt', 'desc')
+                .onSnapshot(snapshot => {
+                    allMajalisas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderTable();
+                }, error => {
+                    console.error('Error loading majalisas:', error);
+                });
+        }
+
+        // Load all orders and group by majalisaId
+        function loadAllOrders() {
+            if (unsubscribeOrders) unsubscribeOrders();
+            
+            unsubscribeOrders = db.collection('majalisa_orders')
+                .onSnapshot(snapshot => {
+                    ordersByMajalisa.clear();
+                    snapshot.docs.forEach(doc => {
+                        const order = { id: doc.id, ...doc.data() };
+                        const majalisaId = order.majalisaId;
+                        if (!ordersByMajalisa.has(majalisaId)) {
+                            ordersByMajalisa.set(majalisaId, []);
+                        }
+                        ordersByMajalisa.get(majalisaId).push(order);
+                    });
+                    renderTable();
+                }, error => {
+                    console.error('Error loading orders:', error);
+                });
+        }
+
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', renderTable);
+        document.getElementById('groupTypeFilter').addEventListener('change', renderTable);
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            loadMajalisas();
+            loadAllOrders();
+        });
+        
+        // Modal close handlers
+        document.getElementById('closeDetailsModalBtn').addEventListener('click', () => {
+            document.getElementById('detailsModal').classList.remove('active');
+        });
+        document.getElementById('closeOrdersModalBtn').addEventListener('click', () => {
+            document.getElementById('ordersModal').classList.remove('active');
+        });
+        
+        document.getElementById('detailsModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('detailsModal')) {
+                document.getElementById('detailsModal').classList.remove('active');
+            }
+        });
+        document.getElementById('ordersModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('ordersModal')) {
+                document.getElementById('ordersModal').classList.remove('active');
+            }
+        });
+        
+        // Initialize
+        loadMajalisas();
+        loadAllOrders();
+    </script>
+</body>
+</html>

@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T-POT & SNACKS | Edit Menu</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', sans-serif; }
+        body { background: #FFFBF5; color: #5D4037; }
+        .container { max-width: 1200px; margin: 40px auto; padding: 20px; }
+        header { background: #8D6E63; color: white; padding: 15px 0; text-align: center; }
+        .logo-main { font-size: 2.8rem; font-weight: 900; }
+        .logo-main .big-t { color: #FFD700; font-size: 3.5rem; }
+
+        .admin-card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #8D6E63; margin-bottom: 20px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #D7CCC8; }
+        th { background: #F5EFE6; color: #8D6E63; }
+        tr:hover { background: #FFF8F0; }
+        
+        .btn { 
+            padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;
+        }
+        .btn-edit { background: #A1887F; color: white; }
+        .btn-delete { background: #D32F2F; color: white; }
+        .btn-add { background: #8D6E63; color: white; padding: 12px 25px; font-size: 1.1rem; }
+
+        .modal { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(93,64,55,0.9); align-items: center; justify-content: center; z-index: 2000;
+        }
+        .modal-content {
+            background: white; padding: 40px; border-radius: 15px; width: 90%; max-width: 900px;
+            max-height: 95vh; overflow-y: auto;
+        }
+        .modal-close { float: right; font-size: 2rem; cursor: pointer; color: #8D6E63; }
+
+        .success { color: #2E7D32; text-align: center; margin: 15px 0; font-weight: bold; }
+        
+        .days-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 10px 0;
+        }
+        .days-group label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: normal;
+            cursor: pointer;
+        }
+        .days-group input {
+            width: auto;
+            margin: 0;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #D7CCC8;
+            border-radius: 6px;
+        }
+        label {
+            font-weight: 600;
+            color: #8D6E63;
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo-main"><span class="big-t">T</span>-POT &amp; SNACKS <span style="font-size:1.2rem;">EDIT MENU</span></div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="admin-card">
+            <h2>Manage Menu Items</h2>
+            <button onclick="window.location.href='RegisterMenu.html'" class="btn btn-add">
+                <i class="fas fa-plus"></i> Add New Item
+            </button>
+
+            <table id="menuTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Category</th>
+                        <th>Days Available</th>
+                        <th>Order Time</th>
+                        <th>Available</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">×</span>
+            <h2>Edit Menu Item</h2>
+            <form id="editForm">
+                <input type="hidden" id="editDocId">
+                
+                <div class="form-grid">
+                    <div>
+                        <label>Name *</label>
+                        <input type="text" id="editName" required>
+                    </div>
+                    <div>
+                        <label>Price *</label>
+                        <input type="text" id="editPrice" required>
+                    </div>
+                    <div>
+                        <label>Category *</label>
+                        <select id="editCategory" required>
+                            <option value="signature">Signature</option>
+                            <option value="snacks">Snacks</option>
+                            <option value="main">Main Courses</option>
+                            <option value="soups">Soups</option>
+							<option value="Tea">Tea</option>
+                            <option value="drinks">Drinks</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Image URL *</label>
+                        <input type="text" id="editImage" required>
+                    </div>
+                    <div>
+                        <label>Serving Size</label>
+                        <input type="text" id="editServing" placeholder="e.g., 1-2 persons">
+                    </div>
+                    <div>
+                        <label>Prep Time</label>
+                        <select id="editPrepTime">
+                            <option value="10-15 mins">10-15 mins</option>
+                            <option value="15-20 mins" selected>15-20 mins</option>
+                            <option value="20-30 mins">20-30 mins</option>
+                            <option value="30-45 mins">30-45 mins</option>
+                            <option value="45-60 mins">45-60 mins</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Spice Level</label>
+                        <select id="editSpiceLevel">
+                            <option value="None">None</option>
+                            <option value="Mild">Mild</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Hot">Hot</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Popularity</label>
+                        <input type="text" id="editPopularity" placeholder="e.g., ★★★★☆">
+                    </div>
+                    <div>
+                        <label>Order Time</label>
+                        <input type="text" id="editOrderTime" placeholder="e.g., 8:00 AM - 10:00 PM">
+                    </div>
+                    <div>
+                        <label>Tags (comma separated)</label>
+                        <input type="text" id="editTags" placeholder="Spicy, Popular">
+                    </div>
+                </div>
+                
+                <div>
+                    <label>Days Available</label>
+                    <div class="days-group" id="editDaysGroup">
+                        <label><input type="checkbox" value="Monday"> Mon</label>
+                        <label><input type="checkbox" value="Tuesday"> Tue</label>
+                        <label><input type="checkbox" value="Wednesday"> Wed</label>
+                        <label><input type="checkbox" value="Thursday"> Thu</label>
+                        <label><input type="checkbox" value="Friday"> Fri</label>
+                        <label><input type="checkbox" value="Saturday"> Sat</label>
+                        <label><input type="checkbox" value="Sunday"> Sun</label>
+                    </div>
+                </div>
+                
+                <div>
+                    <label>Description *</label>
+                    <textarea id="editDescription" rows="4" required></textarea>
+                </div>
+                
+                <div style="margin: 15px 0;">
+                    <label>
+                        <input type="checkbox" id="editAvailable"> Available Today
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn" style="background:#8D6E63; color:white; width:100%; padding:15px; font-size:1.1rem;">
+                    UPDATE ITEM
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDRKWldl8_NSAek4na-H-SQWjUBrxt26iI",
+            authDomain: "tpot.com.ng",
+            projectId: "t-pot-60c3d",
+            storageBucket: "t-pot-60c3d.firebasestorage.app",
+            messagingSenderId: "272048176539",
+            appId: "1:272048176539:web:d73d09a39171c8ef12753e"
+        };
+        
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        const tableBody = document.getElementById('tableBody');
+        const editModal = document.getElementById('editModal');
+        const editForm = document.getElementById('editForm');
+        
+        // Helper: Get selected days from checkboxes
+        function getSelectedDays() {
+            const checkboxes = document.querySelectorAll('#editDaysGroup input[type="checkbox"]:checked');
+            const days = Array.from(checkboxes).map(cb => cb.value);
+            return days.length > 0 ? days.join(', ') : 'Mon-Sun';
+        }
+        
+        // Helper: Set checkboxes from days string
+        function setCheckboxesFromDays(daysString) {
+            const checkboxes = document.querySelectorAll('#editDaysGroup input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = false);
+            if (!daysString || daysString === 'Mon-Sun') return;
+            const daysArray = daysString.split(',').map(d => d.trim());
+            checkboxes.forEach(cb => {
+                if (daysArray.includes(cb.value)) {
+                    cb.checked = true;
+                }
+            });
+        }
+        
+        // Load all menu items into table
+        async function loadMenuItems() {
+            tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Loading...</td></tr>';
+            
+            try {
+                const snapshot = await db.collection("menuItems").orderBy("name").get();
+                
+                if (snapshot.empty) {
+                    tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No menu items found. Click "Add New Item" to create one.</td></tr>';
+                    return;
+                }
+                
+                tableBody.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const item = doc.data();
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.name || ''}</td>
+                        <td>${item.price || ''}</td>
+                        <td>${item.category || ''}</td>
+                        <td>${item.daysAvailable || 'Mon-Sun'}</td>
+                        <td>${item.orderTime || '8AM-10PM'}</td>
+                        <td>${item.available ? '✅ Yes' : '❌ No'}</td>
+                        <td>
+                            <button class="btn btn-edit" onclick="editItem('${doc.id}')">Edit</button>
+                            <button class="btn btn-delete" onclick="deleteItem('${doc.id}')">Delete</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error("Error loading items:", error);
+                tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red;">Error loading data. Check console.</td></tr>';
+            }
+        }
+        
+        // Edit item - open modal with existing data
+        window.editItem = async function(docId) {
+            try {
+                const doc = await db.collection("menuItems").doc(docId).get();
+                
+                if (!doc.exists) {
+                    alert("Item not found!");
+                    return;
+                }
+                
+                const item = doc.data();
+                
+                // Populate form fields
+                document.getElementById('editDocId').value = docId;
+                document.getElementById('editName').value = item.name || '';
+                document.getElementById('editPrice').value = item.price || '';
+                document.getElementById('editCategory').value = item.category || 'signature';
+                document.getElementById('editImage').value = item.image || '';
+                document.getElementById('editServing').value = item.serving || '';
+                document.getElementById('editPrepTime').value = item.prepTime || '15-20 mins';
+                document.getElementById('editSpiceLevel').value = item.spiceLevel || 'Medium';
+                document.getElementById('editPopularity').value = item.popularity || '★★★★☆';
+                document.getElementById('editOrderTime').value = item.orderTime || '';
+                document.getElementById('editTags').value = (item.tags || []).join(', ');
+                document.getElementById('editDescription').value = item.description || '';
+                document.getElementById('editAvailable').checked = item.available || false;
+                
+                // Set days checkboxes
+                setCheckboxesFromDays(item.daysAvailable || '');
+                
+                // Show modal
+                editModal.style.display = 'flex';
+                
+            } catch (error) {
+                console.error("Error loading item:", error);
+                alert("Error loading item details. Please try again.");
+            }
+        };
+        
+        // Close modal
+        window.closeModal = function() {
+            editModal.style.display = 'none';
+            editForm.reset();
+        };
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target === editModal) {
+                closeModal();
+            }
+        };
+        
+        // Update item - THIS IS THE FIXED UPDATE FUNCTION
+        editForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const docId = document.getElementById('editDocId').value;
+            
+            if (!docId) {
+                alert("Error: No item selected for update.");
+                return;
+            }
+            
+            // Get tags as array
+            const tagsInput = document.getElementById('editTags').value;
+            const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t) : [];
+            
+            // Get selected days
+            const selectedDays = getSelectedDays();
+            
+            // Prepare updated data
+            const updatedItem = {
+                name: document.getElementById('editName').value,
+                price: document.getElementById('editPrice').value,
+                category: document.getElementById('editCategory').value,
+                image: document.getElementById('editImage').value,
+                serving: document.getElementById('editServing').value || "1 person",
+                prepTime: document.getElementById('editPrepTime').value,
+                spiceLevel: document.getElementById('editSpiceLevel').value,
+                popularity: document.getElementById('editPopularity').value || "★★★★☆",
+                daysAvailable: selectedDays,
+                orderTime: document.getElementById('editOrderTime').value || "8:00 AM - 10:00 PM",
+                tags: tags,
+                description: document.getElementById('editDescription').value,
+                available: document.getElementById('editAvailable').checked,
+                lastUpdated: new Date().toISOString()
+            };
+            
+            // Show updating status
+            const submitBtn = editForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'UPDATING...';
+            submitBtn.disabled = true;
+            
+            try {
+                await db.collection("menuItems").doc(docId).update(updatedItem);
+                alert("✅ Item updated successfully!");
+                closeModal();
+                loadMenuItems(); // Refresh the table
+            } catch (error) {
+                console.error("Update error:", error);
+                alert("❌ Error updating item: " + error.message);
+            } finally {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+        
+        // Delete item
+        window.deleteItem = async function(docId) {
+            if (confirm("⚠️ Delete this item permanently? This cannot be undone.")) {
+                try {
+                    await db.collection("menuItems").doc(docId).delete();
+                    alert("✅ Item deleted successfully!");
+                    loadMenuItems();
+                } catch (error) {
+                    console.error("Delete error:", error);
+                    alert("❌ Error deleting item: " + error.message);
+                }
+            }
+        };
+        
+        // Load data when page loads
+        window.onload = function() {
+            loadMenuItems();
+        };
+    </script>
+</body>
+</html>

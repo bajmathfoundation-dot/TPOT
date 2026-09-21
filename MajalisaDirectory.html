@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>TPOT Shop | All Majalisas Directory</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            background: #f5f0ea;
+            color: #3a2a1f;
+        }
+
+        /* Header */
+        .header {
+            background: #2c3e2f;
+            color: #fef7e0;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .logo h1 {
+            font-size: 1.6rem;
+            font-weight: 600;
+        }
+
+        .logo span {
+            color: #f4b942;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: #fef7e0;
+            text-decoration: none;
+            font-weight: 500;
+            transition: 0.2s;
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Page Title */
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.8rem;
+            color: #2c3e2f;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .page-header p {
+            color: #7a6a5a;
+            margin-top: 0.5rem;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid #e8dfd4;
+        }
+
+        .stat-card i {
+            font-size: 2rem;
+            color: #b8652e;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2c3e2f;
+        }
+
+        .stat-card .stat-label {
+            color: #7a6a5a;
+            font-size: 0.85rem;
+        }
+
+        /* Search and Filter Bar */
+        .search-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            background: white;
+            padding: 1rem;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .search-input-wrapper {
+            flex: 2;
+            min-width: 200px;
+            position: relative;
+        }
+
+        .search-input-wrapper i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #b8652e;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 15px 12px 40px;
+            border: 1.5px solid #e2dcd2;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: #b8652e;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .filter-select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1.5px solid #e2dcd2;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            outline: none;
+            background: white;
+            cursor: pointer;
+        }
+
+        .refresh-btn {
+            background: #b8652e;
+            color: white;
+            border: none;
+            padding: 0 1.5rem;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .refresh-btn:hover {
+            background: #2c3e2f;
+        }
+
+        /* Majalisa Table */
+        .majalisa-table-wrapper {
+            background: white;
+            border-radius: 24px;
+            overflow-x: auto;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+        }
+
+        .majalisa-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        .majalisa-table th {
+            background: #2c3e2f;
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .majalisa-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #f0e6dc;
+            vertical-align: top;
+        }
+
+        .majalisa-table tr:hover {
+            background: #fefaf5;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: #c8e6c9;
+            color: #1e5a2a;
+        }
+
+        .status-pending {
+            background: #ffe0b2;
+            color: #bf5b00;
+        }
+
+        .status-inactive {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+
+        /* Profile Badge */
+        .profile-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .profile-badge.no-profile {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        /* View Details Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.2s;
+        }
+
+        .modal.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 28px;
+            width: 90%;
+            max-width: 550px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 1.8rem;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #f0dbc8;
+        }
+
+        .modal-header h2 {
+            color: #2c3e2f;
+            font-size: 1.4rem;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #7a6a5a;
+        }
+
+        .detail-row {
+            display: flex;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f0e6dc;
+        }
+
+        .detail-label {
+            width: 120px;
+            font-weight: 600;
+            color: #b8652e;
+        }
+
+        .detail-value {
+            flex: 1;
+            color: #3a2a1f;
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 3rem;
+            color: #a1887f;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #a1887f;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .view-btn {
+            background: #b8652e;
+            color: white;
+            border: none;
+            padding: 0.4rem 1rem;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        .view-btn:hover {
+            background: #2c3e2f;
+        }
+
+        footer {
+            background: #e8dfd4;
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            color: #6b5a4a;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            .search-bar {
+                flex-direction: column;
+            }
+            .detail-label {
+                width: 100px;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <h1><span>🧆</span> TPOT Shop · Majalisa Directory</h1>
+        </div>
+        <div class="nav-links">
+            <a href="index.html"><i class="fas fa-home"></i> Home</a>
+            <a href="MajalisaLogin.html"><i class="fas fa-sign-in-alt"></i> Majalisa Login</a>
+            <a href="CreateMajalisa.html"><i class="fas fa-plus-circle"></i> Create Majalisa</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1><i class="fas fa-users" style="color: #b8652e;"></i> All Majalisas Directory</h1>
+            <p>View all registered majalisas, their locations, group types, and profile status</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <i class="fas fa-users"></i>
+                <div class="stat-number" id="totalMajalisas">0</div>
+                <div class="stat-label">Total Majalisas</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-check-circle"></i>
+                <div class="stat-number" id="verifiedMajalisas">0</div>
+                <div class="stat-label">Verified (Has Profile)</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-clock"></i>
+                <div class="stat-number" id="pendingMajalisas">0</div>
+                <div class="stat-label">Pending Profile</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-map-marker-alt"></i>
+                <div class="stat-number" id="uniqueLocations">0</div>
+                <div class="stat-label">Unique Locations</div>
+            </div>
+        </div>
+
+        <!-- Search and Filter Bar -->
+        <div class="search-bar">
+            <div class="search-input-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search by majalisa name, location, or leader...">
+            </div>
+            <div class="filter-group">
+                <select id="groupTypeFilter" class="filter-select">
+                    <option value="all">All Group Types</option>
+                    <option value="Friends & Family">Friends & Family</option>
+                    <option value="Community">Community</option>
+                    <option value="Sports / Hobby">Sports / Hobby</option>
+                    <option value="Professional">Professional</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <select id="profileStatusFilter" class="filter-select">
+                    <option value="all">All Status</option>
+                    <option value="hasProfile">Has Profile (Verified)</option>
+                    <option value="noProfile">No Profile Yet</option>
+                </select>
+            </div>
+            <button id="refreshBtn" class="refresh-btn"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
+
+        <!-- Majalisa Table -->
+        <div class="majalisa-table-wrapper">
+            <table class="majalisa-table">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-tag"></i> Majalisa Name</th>
+                        <th><i class="fas fa-map-marker-alt"></i> Location</th>
+                        <th><i class="fas fa-users"></i> Group Type</th>
+                        <th><i class="fas fa-user"></i> Leader/Host</th>
+                        <th><i class="fas fa-phone"></i> Contact</th>
+                        <th><i class="fas fa-shield-alt"></i> Profile Status</th>
+                        <th><i class="fas fa-eye"></i> Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="majalisaTableBody">
+                    <tr>
+                        <td colspan="7" class="loading-state">
+                            <i class="fas fa-spinner fa-spin"></i> Loading majalisas...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- View Details Modal -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-info-circle"></i> Majalisa Details</h2>
+                <button class="close-modal" id="closeModalBtn">&times;</button>
+            </div>
+            <div id="modalDetails"></div>
+        </div>
+    </div>
+
+    <footer>
+        <p>🍜 TPOT Shop · Empowering Communities Through Food & Gathering</p>
+        <p style="font-size: 0.7rem; margin-top: 0.5rem;">Total majalisas count reflects all registered groups in the system</p>
+    </footer>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDRKWldl8_NSAek4na-H-SQWjUBrxt26iI",
+            authDomain: "tpot.com.ng",
+            projectId: "t-pot-60c3d",
+            storageBucket: "t-pot-60c3d.firebasestorage.app",
+            messagingSenderId: "272048176539",
+            appId: "1:272048176539:web:d73d09a39171c8ef12753e"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Global variables
+        let allMajalisas = [];
+        let unsubscribe = null;
+
+        // Helper: Escape HTML
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        // Format date
+        function formatDate(timestamp) {
+            if (!timestamp) return 'N/A';
+            try {
+                const date = timestamp.toDate();
+                return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } catch(e) {
+                return 'N/A';
+            }
+        }
+
+        // Update stats
+        function updateStats(majalisas) {
+            const total = majalisas.length;
+            const verified = majalisas.filter(m => m.hasProfile === true).length;
+            const pending = total - verified;
+            const uniqueLocations = new Set(majalisas.map(m => m.location).filter(l => l)).size;
+            
+            document.getElementById('totalMajalisas').innerText = total;
+            document.getElementById('verifiedMajalisas').innerText = verified;
+            document.getElementById('pendingMajalisas').innerText = pending;
+            document.getElementById('uniqueLocations').innerText = uniqueLocations;
+        }
+
+        // Render table
+        function renderTable(majalisas) {
+            const tbody = document.getElementById('majalisaTableBody');
+            
+            if (!majalisas.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="fas fa-inbox"></i><br>No majalisas found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = majalisas.map(majalisa => {
+                const hasProfile = majalisa.hasProfile === true;
+                const profileStatusHtml = hasProfile 
+                    ? '<span class="profile-badge"><i class="fas fa-check-circle"></i> Verified</span>'
+                    : '<span class="profile-badge no-profile"><i class="fas fa-clock"></i> Pending Setup</span>';
+                
+                // Contact display
+                let contactHtml = '';
+                if (majalisa.contactPhone) contactHtml += `<i class="fas fa-phone"></i> ${escapeHtml(majalisa.contactPhone)}<br>`;
+                if (majalisa.contactEmail) contactHtml += `<i class="fas fa-envelope"></i> ${escapeHtml(majalisa.contactEmail)}`;
+                if (!contactHtml) contactHtml = '<span style="color: #a1887f;">—</span>';
+                
+                return `
+                    <tr>
+                        <td><strong>${escapeHtml(majalisa.majalisaName || 'Unnamed')}</strong></td>
+                        <td><i class="fas fa-map-pin" style="color: #b8652e; font-size: 0.7rem;"></i> ${escapeHtml(majalisa.location || '—')}</td>
+                        <td><span style="background: #f0dbc8; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem;">${escapeHtml(majalisa.groupType || '—')}</span></td>
+                        <td>${escapeHtml(majalisa.groupLeader || majalisa.leader || '—')}</td>
+                        <td style="font-size: 0.8rem;">${contactHtml}</td>
+                        <td>${profileStatusHtml}</td>
+                        <td><button class="view-btn" data-id="${majalisa.id}"><i class="fas fa-eye"></i> View</button></td>
+                    </tr>
+                `;
+            }).join('');
+            
+            // Add event listeners to view buttons
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.id;
+                    const majalisa = allMajalisas.find(m => m.id === id);
+                    if (majalisa) showDetailsModal(majalisa);
+                });
+            });
+        }
+        
+        // Show details modal
+        function showDetailsModal(majalisa) {
+            const modal = document.getElementById('detailModal');
+            const modalDetails = document.getElementById('modalDetails');
+            
+            const hasProfile = majalisa.hasProfile === true;
+            const statusText = hasProfile ? 'Verified (Profile Created)' : 'Pending (No Profile Yet)';
+            const statusClass = hasProfile ? 'status-active' : 'status-pending';
+            
+            modalDetails.innerHTML = `
+                <div class="detail-row">
+                    <div class="detail-label"><i class="fas fa-tag"></i> Majalisa Name</div>
+                    <div class="detail-value"><strong>${escapeHtml(majalisa.majalisaName || '—')}</strong></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label"><i class="fas fa-map-marker-alt"></i> Location</div>
+                    <div class="detail-value">${escapeHtml(majalisa.location || '—')}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label"><i class="fas fa-users"></i> Group Type</div>
+                    <div class="detail-value">${escapeHtml(majalisa.groupType || '—')}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label"><i class="fas fa-user"></i> Group Leader</div>
+                    <div class="detail-value">${escapeHtml(majalisa.groupLeader || majalisa.leader || '—')}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label"><i class="fas fa-phone"></i> Phone</div>
+                    <div class="detail-value">${escapeHtml(majalisa.contactPhone || 'Not provided')}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label"><i class="fas fa-envelope"></i> Email</div>
+                    <div class="detail-value">${escapeHtml(majalisa.contactEmail || 'Not provided')}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label"><i class="fas fa-calendar"></i> Created</div>
+                    <div class="detail-value">${formatDate(majalisa.createdAt)}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label"><i class="fas fa-shield-alt"></i> Profile Status</div>
+                    <div class="detail-value"><span class="status-badge ${statusClass}">${statusText}</span></div>
+                </div>
+                ${majalisa.notes ? `
+                <div class="detail-row">
+                    <div class="detail-label"><i class="fas fa-sticky-note"></i> Notes</div>
+                    <div class="detail-value">${escapeHtml(majalisa.notes)}</div>
+                </div>
+                ` : ''}
+                ${majalisa.meetingDay ? `
+                <div class="detail-row">
+                    <div class="detail-label"><i class="fas fa-calendar-week"></i> Meeting Day</div>
+                    <div class="detail-value">${escapeHtml(majalisa.meetingDay)} ${majalisa.meetingTime ? 'at ' + escapeHtml(majalisa.meetingTime) : ''}</div>
+                </div>
+                ` : ''}
+            `;
+            
+            modal.classList.add('active');
+        }
+        
+        // Filter majalisas based on search and filters
+        function filterMajalisas() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const groupTypeFilter = document.getElementById('groupTypeFilter').value;
+            const profileStatusFilter = document.getElementById('profileStatusFilter').value;
+            
+            let filtered = [...allMajalisas];
+            
+            // Search filter
+            if (searchTerm) {
+                filtered = filtered.filter(m => 
+                    (m.majalisaName && m.majalisaName.toLowerCase().includes(searchTerm)) ||
+                    (m.location && m.location.toLowerCase().includes(searchTerm)) ||
+                    (m.groupLeader && m.groupLeader.toLowerCase().includes(searchTerm)) ||
+                    (m.leader && m.leader.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            // Group type filter
+            if (groupTypeFilter !== 'all') {
+                filtered = filtered.filter(m => m.groupType === groupTypeFilter);
+            }
+            
+            // Profile status filter
+            if (profileStatusFilter === 'hasProfile') {
+                filtered = filtered.filter(m => m.hasProfile === true);
+            } else if (profileStatusFilter === 'noProfile') {
+                filtered = filtered.filter(m => m.hasProfile !== true);
+            }
+            
+            renderTable(filtered);
+            updateStats(allMajalisas); // Stats always based on total
+        }
+        
+        // Load majalisas from Firestore with realtime listener
+        function loadMajalisas() {
+            if (unsubscribe) unsubscribe();
+            
+            const tbody = document.getElementById('majalisaTableBody');
+            tbody.innerHTML = '<tr><td colspan="7" class="loading-state"><i class="fas fa-spinner fa-spin"></i> Loading majalisas...</td></tr>';
+            
+            unsubscribe = db.collection('majalisa')
+                .orderBy('createdAt', 'desc')
+                .onSnapshot(snapshot => {
+                    allMajalisas = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+                    
+                    filterMajalisas();
+                }, error => {
+                    console.error('Error loading majalisas:', error);
+                    tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="fas fa-exclamation-triangle"></i><br>Error loading data. Please refresh.</td></tr>';
+                });
+        }
+        
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', filterMajalisas);
+        document.getElementById('groupTypeFilter').addEventListener('change', filterMajalisas);
+        document.getElementById('profileStatusFilter').addEventListener('change', filterMajalisas);
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            loadMajalisas();
+        });
+        
+        // Modal close handlers
+        document.getElementById('closeModalBtn').addEventListener('click', () => {
+            document.getElementById('detailModal').classList.remove('active');
+        });
+        
+        document.getElementById('detailModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('detailModal')) {
+                document.getElementById('detailModal').classList.remove('active');
+            }
+        });
+        
+        // Initialize
+        loadMajalisas();
+    </script>
+</body>
+</html>
