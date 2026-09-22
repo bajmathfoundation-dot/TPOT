@@ -409,7 +409,7 @@
             <div class="kpi-card cost">
                 <div class="kpi-title"><i class="fas fa-coins"></i> Total Cost</div>
                 <div class="kpi-value" id="totalCost">₦0</div>
-                <div class="kpi-sub">Ingredients + supplies</div>
+                <div class="kpi-sub" id="costSub">Real batch cost</div>
             </div>
             <div class="kpi-card profit">
                 <div class="kpi-title"><i class="fas fa-chart-simple"></i> Net Profit</div>
@@ -457,16 +457,17 @@
                         <tr>
                             <th>Menu Item</th>
                             <th>Category</th>
-                            <th>Quantity Sold</th>
+                            <th>Qty Sold</th>
                             <th>Revenue (₦)</th>
                             <th>Food Cost (₦)</th>
                             <th>Profit (₦)</th>
                             <th>Margin</th>
+                            <th>Cost / Sell / Profit per Piece</th>
                             <th>Trend</th>
                         </tr>
                     </thead>
                     <tbody id="itemsBody">
-                        <tr><td colspan="8" style="text-align:center;">Loading...</td></tr>
+                        <tr><td colspan="9" style="text-align:center;">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -515,17 +516,18 @@
                             <th>Batch #</th>
                             <th>Item</th>
                             <th>Batch Date</th>
-                            <th>Original Qty</th>
+                            <th>Cost/Pc</th>
+                            <th>Sell/Pc</th>
+                            <th>Profit/Pc</th>
                             <th>Sold</th>
                             <th>Remaining</th>
-                            <th>Purchase Cost</th>
-                            <th>Revenue Generated</th>
+                            <th>Revenue</th>
                             <th>Profit</th>
                             <th>Status</th>
                         </tr>
                     </thead>
                     <tbody id="batchesBody">
-                        <tr><td colspan="10" style="text-align:center;">Loading...</td></tr>
+                        <tr><td colspan="11" style="text-align:center;">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -565,16 +567,60 @@
         let revenueCostChart = null;
         let topItemsChart = null;
 
-        // Cost parameters (configurable)
-        const FOOD_COST_PERCENT = 40;
-        const OPERATIONAL_COST_PERCENT = 5;
+        // Fallback cost % (only used if batchId is missing on a sale)
+        const FALLBACK_COST_PERCENT = 45;
+
+        // Map: batchId → { costPerPiece, itemName, purchasePrice, piecesPerUnit }
+        let batchCostMap = new Map();
 
         function formatCurrency(amount) {
-            return `₦${amount.toLocaleString()}`;
+            return `₦${Math.round(amount).toLocaleString()}`;
         }
 
-        function calculateCost(revenue) {
-            return revenue * (FOOD_COST_PERCENT + OPERATIONAL_COST_PERCENT) / 100;
+        // Build the batch cost map from loaded batches
+        function buildBatchCostMap() {
+            batchCostMap.clear();
+            allBatches.forEach(batch => {
+                const piecesPerUnit = batch.piecesPerUnit || 1;
+                const purchasePrice = batch.purchasePrice || 0;
+                const costPerPiece = piecesPerUnit > 0 ? (purchasePrice / piecesPerUnit) : 0;
+                
+                batchCostMap.set(batch.id, {
+                    costPerPiece: costPerPiece,
+                    itemName: batch.itemName,
+                    purchasePrice: purchasePrice,
+                    piecesPerUnit: piecesPerUnit,
+                    purchaseUnit: batch.purchaseUnit,
+                    sellingPrice: batch.sellingPrice || 0
+                });
+            });
+        }
+
+        // Get real cost per piece for a given sale (via batchId)
+        function getCostPerPieceForSale(sale) {
+            if (sale.batchId && batchCostMap.has(sale.batchId)) {
+                return batchCostMap.get(sale.batchId).costPerPiece;
+            }
+            return null; // signal fallback needed
+        }
+
+        // Calculate real cost for a set of sales
+        function calculateRealCost(sales) {
+            let totalCost = 0;
+            let totalRevenue = 0;
+            sales.forEach(sale => {
+                const qty = sale.quantitySold || 0;
+                const revenue = sale.totalAmount || 0;
+                totalRevenue += revenue;
+                
+                const costPerPiece = getCostPerPieceForSale(sale);
+                if (costPerPiece !== null) {
+                    totalCost += qty * costPerPiece;
+                } else {
+                    totalCost += revenue * (FALLBACK_COST_PERCENT / 100);
+                }
+            });
+            return { totalCost, totalRevenue };
         }
 
         function setDateRange(range) {
@@ -617,7 +663,7 @@
             });
         }
 
-        // Calculate per-item metrics
+        // Calculate per-item metrics with REAL batch costs
         function calculateItemMetrics(sales, start, end) {
             const filteredSales = filterSalesByDate(sales, start, end);
             const itemMap = new Map();
@@ -629,25 +675,45 @@
                         name: itemName,
                         category: sale.category || 'General',
                         quantity: 0,
-                        revenue: 0
+                        revenue: 0,
+                        cost: 0
                     });
                 }
                 const item = itemMap.get(itemName);
-                item.quantity += sale.quantitySold || 0;
-                item.revenue += sale.totalAmount || 0;
+                const qty = sale.quantitySold || 0;
+                const revenue = sale.totalAmount || 0;
+                
+                item.quantity += qty;
+                item.revenue += revenue;
+                
+                const costPerPiece = getCostPerPieceForSale(sale);
+                if (costPerPiece !== null) {
+                    item.cost += qty * costPerPiece;
+                } else {
+                    item.cost += revenue * (FALLBACK_COST_PERCENT / 100);
+                }
             });
             
             const itemsArray = Array.from(itemMap.values()).map(item => {
-                const cost = calculateCost(item.revenue);
-                const profit = item.revenue - cost;
+                const profit = item.revenue - item.cost;
                 const margin = item.revenue > 0 ? (profit / item.revenue * 100) : 0;
-                return { ...item, cost, profit, margin };
+                const avgCostPerPiece = item.quantity > 0 ? item.cost / item.quantity : 0;
+                const avgSellingPrice = item.quantity > 0 ? item.revenue / item.quantity : 0;
+                const profitPerPiece = avgSellingPrice - avgCostPerPiece;
+                return { 
+                    ...item, 
+                    profit, 
+                    margin,
+                    avgCostPerPiece,
+                    avgSellingPrice,
+                    profitPerPiece
+                };
             }).sort((a, b) => b.revenue - a.revenue);
             
             return itemsArray;
         }
 
-        // Calculate time-based progression
+        // Calculate time-based progression with REAL batch costs
         function calculateTimeProgression(sales, period, start, end) {
             const filteredSales = filterSalesByDate(sales, start, end);
             const periodMap = new Map();
@@ -686,23 +752,33 @@
                         orders: 0,
                         itemsSold: 0,
                         revenue: 0,
+                        cost: 0,
                         itemCount: new Map()
                     });
                 }
                 const periodData = periodMap.get(periodKey);
+                const qty = sale.quantitySold || 0;
+                const revenue = sale.totalAmount || 0;
+                
                 periodData.orders++;
-                periodData.itemsSold += sale.quantitySold || 0;
-                periodData.revenue += sale.totalAmount || 0;
+                periodData.itemsSold += qty;
+                periodData.revenue += revenue;
+                
+                const costPerPiece = getCostPerPieceForSale(sale);
+                if (costPerPiece !== null) {
+                    periodData.cost += qty * costPerPiece;
+                } else {
+                    periodData.cost += revenue * (FALLBACK_COST_PERCENT / 100);
+                }
                 
                 const itemName = sale.itemName || 'Unknown';
-                periodData.itemCount.set(itemName, (periodData.itemCount.get(itemName) || 0) + (sale.quantitySold || 0));
+                periodData.itemCount.set(itemName, (periodData.itemCount.get(itemName) || 0) + qty);
             });
             
             const sortedPeriods = Array.from(periodMap.entries())
                 .sort((a, b) => a[0].localeCompare(b[0]))
                 .map(([key, data]) => {
-                    const cost = calculateCost(data.revenue);
-                    const profit = data.revenue - cost;
+                    const profit = data.revenue - data.cost;
                     const margin = data.revenue > 0 ? (profit / data.revenue * 100) : 0;
                     let topItem = '—';
                     let maxQty = 0;
@@ -717,7 +793,7 @@
                         orders: data.orders,
                         itemsSold: data.itemsSold,
                         revenue: data.revenue,
-                        cost: cost,
+                        cost: data.cost,
                         profit: profit,
                         margin: margin,
                         topItem: topItem.length > 20 ? topItem.substring(0, 20) + '...' : topItem
@@ -727,26 +803,40 @@
             return sortedPeriods;
         }
 
-        // Calculate batch performance
+        // Calculate batch performance with REAL cost per piece
         async function calculateBatchPerformance(batches, sales, start, end) {
             const filteredSales = filterSalesByDate(sales, start, end);
-            const batchSalesMap = new Map();
+            const batchSalesMap = new Map(); // batchId → { qty, revenue }
             
             filteredSales.forEach(sale => {
                 const batchId = sale.batchId;
                 if (batchId) {
-                    batchSalesMap.set(batchId, (batchSalesMap.get(batchId) || 0) + (sale.quantitySold || 0));
+                    if (!batchSalesMap.has(batchId)) {
+                        batchSalesMap.set(batchId, { qty: 0, revenue: 0 });
+                    }
+                    const entry = batchSalesMap.get(batchId);
+                    entry.qty += sale.quantitySold || 0;
+                    entry.revenue += sale.totalAmount || 0;
                 }
             });
             
             const batchPerformance = [];
             for (const batch of batches) {
-                const sold = batchSalesMap.get(batch.id) || 0;
-                const originalPieces = (batch.batchQty || batch.stockUnits || 0) * (batch.piecesPerUnit || 1);
+                const soldData = batchSalesMap.get(batch.id) || { qty: 0, revenue: 0 };
+                const sold = soldData.qty;
+                
+                const originalPieces = (batch.stockUnits || 0) * (batch.piecesPerUnit || 1);
                 const remaining = originalPieces - sold;
-                const revenueGenerated = sold * (batch.sellingPrice || 0);
-                const purchaseCost = (batch.purchasePrice || 0) * (batch.batchQty || batch.stockUnits || 0);
-                const profit = revenueGenerated - purchaseCost;
+                
+                const purchasePrice = batch.purchasePrice || 0;
+                const piecesPerUnit = batch.piecesPerUnit || 1;
+                const costPerPiece = piecesPerUnit > 0 ? (purchasePrice / piecesPerUnit) : 0;
+                const sellingPrice = batch.sellingPrice || 0;
+                
+                const revenueGenerated = soldData.revenue;
+                const costOfSold = sold * costPerPiece;
+                const profit = revenueGenerated - costOfSold;
+                const profitPerPiece = sellingPrice - costPerPiece;
                 
                 let status = 'ACTIVE';
                 if (remaining <= 0) status = 'EMPTY';
@@ -760,7 +850,12 @@
                     originalQty: originalPieces,
                     sold: sold,
                     remaining: remaining,
-                    purchaseCost: purchaseCost,
+                    costPerPiece: costPerPiece,
+                    sellingPrice: sellingPrice,
+                    profitPerPiece: profitPerPiece,
+                    purchasePrice: purchasePrice,
+                    purchaseCost: purchasePrice * (batch.stockUnits || 0),
+                    costOfSold: costOfSold,
                     revenueGenerated: revenueGenerated,
                     profit: profit,
                     status: status
@@ -770,15 +865,36 @@
             return batchPerformance.sort((a, b) => b.profit - a.profit);
         }
 
-        // Update KPIs
+        // Update KPIs with real cost
         function updateKPIs(sales, start, end) {
             const filteredSales = filterSalesByDate(sales, start, end);
-            const totalRevenue = filteredSales.reduce((sum, s) => sum + (s.totalAmount || 0), 0);
-            const totalCost = calculateCost(totalRevenue);
+            
+            let totalRevenue = 0;
+            let totalCost = 0;
+            let totalItemsSold = 0;
+            
+            filteredSales.forEach(sale => {
+                const qty = sale.quantitySold || 0;
+                const revenue = sale.totalAmount || 0;
+                
+                totalRevenue += revenue;
+                totalItemsSold += qty;
+                
+                const costPerPiece = getCostPerPieceForSale(sale);
+                if (costPerPiece !== null) {
+                    totalCost += qty * costPerPiece;
+                } else {
+                    totalCost += revenue * (FALLBACK_COST_PERCENT / 100);
+                }
+            });
+            
             const netProfit = totalRevenue - totalCost;
             const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue * 100) : 0;
             const totalOrders = filteredSales.length;
-            const totalItemsSold = filteredSales.reduce((sum, s) => sum + (s.quantitySold || 0), 0);
+            
+            const avgCostPerPiece = totalItemsSold > 0 ? totalCost / totalItemsSold : 0;
+            const avgSellingPrice = totalItemsSold > 0 ? totalRevenue / totalItemsSold : 0;
+            const avgProfitPerPiece = avgSellingPrice - avgCostPerPiece;
             
             document.getElementById('totalRevenue').innerHTML = formatCurrency(totalRevenue);
             document.getElementById('totalCost').innerHTML = formatCurrency(totalCost);
@@ -787,17 +903,21 @@
             document.getElementById('totalOrders').innerHTML = totalOrders.toLocaleString();
             document.getElementById('totalItemsSold').innerHTML = totalItemsSold.toLocaleString();
             
+            // Cost card subtitle: average cost per piece
+            document.getElementById('costSub').innerHTML = 
+                `Real batch cost · Avg ₦${Math.round(avgCostPerPiece)}/pc`;
+            
             const trendSpan = document.getElementById('profitTrend');
             if (netProfit >= 0) {
-                trendSpan.innerHTML = '<i class="fas fa-arrow-up" style="color:#2e7d32;"></i> Profitable period';
+                trendSpan.innerHTML = `<i class="fas fa-arrow-up"></i> ~₦${Math.round(avgProfitPerPiece)}/piece avg profit`;
                 trendSpan.style.color = '#2e7d32';
             } else {
-                trendSpan.innerHTML = '<i class="fas fa-arrow-down" style="color:#c62828;"></i> Loss period';
+                trendSpan.innerHTML = `<i class="fas fa-arrow-down"></i> ~₦${Math.round(Math.abs(avgProfitPerPiece))}/piece avg loss`;
                 trendSpan.style.color = '#c62828';
             }
         }
 
-        // Update charts
+        // Update charts with real cost
         function updateCharts(sales, start, end) {
             const filteredSales = filterSalesByDate(sales, start, end);
             
@@ -811,8 +931,15 @@
                     monthlyData.set(monthKey, { revenue: 0, cost: 0, date: date });
                 }
                 const revenue = sale.totalAmount || 0;
+                const qty = sale.quantitySold || 0;
                 monthlyData.get(monthKey).revenue += revenue;
-                monthlyData.get(monthKey).cost += calculateCost(revenue);
+                
+                const costPerPiece = getCostPerPieceForSale(sale);
+                if (costPerPiece !== null) {
+                    monthlyData.get(monthKey).cost += qty * costPerPiece;
+                } else {
+                    monthlyData.get(monthKey).cost += revenue * (FALLBACK_COST_PERCENT / 100);
+                }
             });
             
             const sortedMonths = Array.from(monthlyData.entries()).sort((a, b) => a[1].date - b[1].date);
@@ -834,7 +961,7 @@
                         { label: 'Cost', data: costData, borderColor: '#c62828', backgroundColor: 'rgba(198,40,40,0.1)', fill: true, tension: 0.3 }
                     ]
                 },
-                options: { responsive: true, maintainAspectRatio: true, plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ₦${ctx.raw.toLocaleString()}` } } } }
+                options: { responsive: true, maintainAspectRatio: true, plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ₦${Math.round(ctx.raw).toLocaleString()}` } } } }
             });
             
             // Top items pie chart
@@ -850,17 +977,17 @@
                     labels: [...top5.map(i => i.name), otherRevenue > 0 ? 'Others' : null].filter(Boolean),
                     datasets: [{ data: [...top5.map(i => i.revenue), otherRevenue > 0 ? otherRevenue : null].filter(Boolean), backgroundColor: ['#b8652e', '#2c3e2f', '#6d4c41', '#ff8f00', '#1565c0', '#9e9e9e'] }]
                 },
-                options: { responsive: true, plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ₦${ctx.raw.toLocaleString()}` } } } }
+                options: { responsive: true, plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ₦${Math.round(ctx.raw).toLocaleString()}` } } } }
             });
         }
 
-        // Update items table
+        // Update items table with per-piece breakdown
         function updateItemsTable(sales, start, end) {
             const itemMetrics = calculateItemMetrics(sales, start, end);
             const tbody = document.getElementById('itemsBody');
             
             if (!itemMetrics.length) {
-                tbody.innerHTML = '<tr><td colspan="8">No sales data in selected period</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">No sales data in selected period</td></tr>';
                 return;
             }
             
@@ -872,10 +999,17 @@
                         <td><strong>${escapeHtml(item.name)}</strong></td>
                         <td>${escapeHtml(item.category)}</td>
                         <td>${item.quantity.toLocaleString()}</td>
-                        <td>₦${item.revenue.toLocaleString()}</td>
-                        <td>₦${item.cost.toLocaleString()}</td>
-                        <td class="${profitClass}">₦${item.profit.toLocaleString()}</td>
+                        <td>₦${Math.round(item.revenue).toLocaleString()}</td>
+                        <td>₦${Math.round(item.cost).toLocaleString()}</td>
+                        <td class="${profitClass}">₦${Math.round(item.profit).toLocaleString()}</td>
                         <td>${item.margin.toFixed(1)}%</td>
+                        <td>
+                            <small>
+                                Cost: <strong>₦${Math.round(item.avgCostPerPiece)}</strong><br>
+                                Sell: <strong>₦${Math.round(item.avgSellingPrice)}</strong><br>
+                                <span class="${profitClass}">+₦${Math.round(item.profitPerPiece)}/pc</span>
+                            </small>
+                        </td>
                         <td>${trend}</td>
                     </tr>
                 `;
@@ -888,7 +1022,7 @@
             const tbody = document.getElementById('timeBody');
             
             if (!timeData.length) {
-                tbody.innerHTML = '<tr><td colspan="8">No data available</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No data available</td></tr>';
                 return;
             }
             
@@ -899,9 +1033,9 @@
                         <td><strong>${escapeHtml(data.period)}</strong></td>
                         <td>${data.orders}</td>
                         <td>${data.itemsSold.toLocaleString()}</td>
-                        <td>₦${data.revenue.toLocaleString()}</td>
-                        <td>₦${data.cost.toLocaleString()}</td>
-                        <td class="${profitClass}">₦${data.profit.toLocaleString()}</td>
+                        <td>₦${Math.round(data.revenue).toLocaleString()}</td>
+                        <td>₦${Math.round(data.cost).toLocaleString()}</td>
+                        <td class="${profitClass}">₦${Math.round(data.profit).toLocaleString()}</td>
                         <td>${data.margin.toFixed(1)}%</td>
                         <td>${escapeHtml(data.topItem)}</td>
                     </tr>
@@ -909,13 +1043,13 @@
             }).join('');
         }
 
-        // Update batches table
+        // Update batches table with real per-piece cost/profit
         async function updateBatchesTable(batches, sales, start, end) {
             const batchPerformance = await calculateBatchPerformance(batches, sales, start, end);
             const tbody = document.getElementById('batchesBody');
             
             if (!batchPerformance.length) {
-                tbody.innerHTML = '<tr><td colspan="10">No batches found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;">No batches found</td></tr>';
                 return;
             }
             
@@ -931,12 +1065,13 @@
                         <td><small>${escapeHtml(batch.batchNumber)}</small></td>
                         <td><strong>${escapeHtml(batch.itemName)}</strong></td>
                         <td><small>${escapeHtml(batch.batchDate)}</small></td>
-                        <td>${batch.originalQty.toLocaleString()}</td>
-                        <td>${batch.sold.toLocaleString()}</td>
-                        <td>${batch.remaining.toLocaleString()}</td>
-                        <td>₦${batch.purchaseCost.toLocaleString()}</td>
-                        <td>₦${batch.revenueGenerated.toLocaleString()}</td>
-                        <td class="${profitClass}">₦${batch.profit.toLocaleString()}</td>
+                        <td>₦${Math.round(batch.costPerPiece).toLocaleString()}</td>
+                        <td>₦${Math.round(batch.sellingPrice).toLocaleString()}</td>
+                        <td class="${profitClass}"><strong>+₦${Math.round(batch.profitPerPiece).toLocaleString()}</strong></td>
+                        <td>${batch.sold.toLocaleString()} pcs</td>
+                        <td>${batch.remaining.toLocaleString()} pcs</td>
+                        <td>₦${Math.round(batch.revenueGenerated).toLocaleString()}</td>
+                        <td class="${profitClass}">₦${Math.round(batch.profit).toLocaleString()}</td>
                         <td>${statusBadge}</td>
                     </tr>
                 `;
@@ -944,6 +1079,8 @@
         }
 
         async function refreshAll() {
+            buildBatchCostMap();  // Rebuild map before every calculation
+            
             const { start, end } = setDateRange(currentRange);
             currentStartDate = start;
             currentEndDate = end;
@@ -986,8 +1123,19 @@
 
         function exportItemsData() {
             const itemMetrics = calculateItemMetrics(allSales, currentStartDate, currentEndDate);
-            const headers = ['Item Name', 'Category', 'Quantity Sold', 'Revenue (₦)', 'Cost (₦)', 'Profit (₦)', 'Margin (%)'];
-            const rows = itemMetrics.map(item => [item.name, item.category, item.quantity, item.revenue, item.cost, item.profit, item.margin.toFixed(1)]);
+            const headers = ['Item Name', 'Category', 'Quantity Sold', 'Revenue (₦)', 'Cost (₦)', 'Profit (₦)', 'Margin (%)', 'Avg Cost/Pc (₦)', 'Avg Sell/Pc (₦)', 'Profit/Pc (₦)'];
+            const rows = itemMetrics.map(item => [
+                item.name, 
+                item.category, 
+                item.quantity, 
+                Math.round(item.revenue), 
+                Math.round(item.cost), 
+                Math.round(item.profit), 
+                item.margin.toFixed(1),
+                Math.round(item.avgCostPerPiece),
+                Math.round(item.avgSellingPrice),
+                Math.round(item.profitPerPiece)
+            ]);
             const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
             const blob = new Blob([csvContent], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
