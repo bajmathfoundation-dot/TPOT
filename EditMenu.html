@@ -17,7 +17,7 @@
         h2 { text-align: center; color: #8D6E63; margin-bottom: 20px; }
 
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #D7CCC8; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #D7CCC8; vertical-align: middle; }
         th { background: #F5EFE6; color: #8D6E63; }
         tr:hover { background: #FFF8F0; }
         
@@ -34,7 +34,7 @@
         }
         .modal-content {
             background: white; padding: 40px; border-radius: 15px; width: 90%; max-width: 900px;
-            max-height: 95vh; overflow-y: auto;
+            max-height: 95vh; overflow-y: auto; position: relative;
         }
         .modal-close { float: right; font-size: 2rem; cursor: pointer; color: #8D6E63; }
 
@@ -75,6 +75,61 @@
             display: block;
             margin-bottom: 5px;
         }
+
+        /* ===== IMAGE UPLOAD UI ===== */
+        .image-panel {
+            grid-column: 1 / -1;
+            border: 1px dashed #D7CCC8;
+            border-radius: 10px;
+            padding: 16px;
+            background: #FFFBF5;
+        }
+        .image-panel .row {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+        .image-preview {
+            width: 150px; height: 110px;
+            border-radius: 8px;
+            background: #F5EFE6 center/cover no-repeat;
+            flex: none;
+            border: 1px solid #D7CCC8;
+            display: grid; place-items: center;
+            color: #A1887F; font-size: .8rem; text-align: center; padding: 6px;
+        }
+        .image-controls { flex: 1; min-width: 220px; }
+        .image-controls .tab-row {
+            display: flex; gap: 8px; margin-bottom: 10px;
+        }
+        .tab-row .toggle {
+            padding: 6px 14px; border-radius: 20px; border: 1px solid #D7CCC8;
+            background: #fff; color: #8D6E63; font-size: .85rem; cursor: pointer; font-weight: 600;
+        }
+        .tab-row .toggle.active {
+            background: #A1887F; color: #fff; border-color: #A1887F;
+        }
+        .file-drop {
+            display: block; padding: 14px; border: 1px dashed #A1887F;
+            border-radius: 8px; background: #fff; text-align: center;
+            color: #8D6E63; cursor: pointer; font-size: .9rem;
+        }
+        .file-drop.dragover { background: #F5EFE6; }
+        .file-drop input { display: none; }
+        .upload-status {
+            font-size: .85rem; margin-top: 8px; color: #8D6E63;
+        }
+        .upload-status.error { color: #D32F2F; font-weight: 600; }
+        .upload-status.ok    { color: #2E7D32; font-weight: 600; }
+        .progress {
+            height: 6px; background: #F5EFE6; border-radius: 3px; overflow: hidden; margin-top: 8px;
+            display: none;
+        }
+        .progress > div {
+            height: 100%; width: 0; background: #A1887F; transition: width .2s ease;
+        }
+        .progress.active { display: block; }
     </style>
 </head>
 <body>
@@ -94,6 +149,7 @@
             <table id="menuTable">
                 <thead>
                     <tr>
+                        <th>Image</th>
                         <th>Name</th>
                         <th>Price</th>
                         <th>Category</th>
@@ -117,6 +173,43 @@
                 <input type="hidden" id="editDocId">
                 
                 <div class="form-grid">
+                    
+                    <!-- ==== IMAGE PANEL ==== -->
+                    <div class="image-panel">
+                        <label>Dish Image *</label>
+                        <div class="row">
+                            <div class="image-preview" id="editImagePreview">No image</div>
+                            <div class="image-controls">
+                                <div class="tab-row" id="editTabRow">
+                                    <button type="button" class="toggle active" data-mode="upload">Upload file</button>
+                                    <button type="button" class="toggle" data-mode="url">Use URL</button>
+                                </div>
+
+                                <!-- Upload mode -->
+                                <div id="editUploadMode">
+                                    <label class="file-drop" id="editFileDrop">
+                                        <input type="file" id="editImageFile" accept="image/*">
+                                        <i class="fas fa-cloud-arrow-up"></i>
+                                        <span id="editFileDropText">Click or drop an image here (max 5 MB)</span>
+                                    </label>
+                                    <div class="progress" id="editUploadProgress"><div></div></div>
+                                    <div class="upload-status" id="editUploadStatus"></div>
+                                </div>
+
+                                <!-- URL mode -->
+                                <div id="editUrlMode" hidden>
+                                    <input type="url" id="editImageUrl"
+                                           placeholder="https://raw.githubusercontent.com/bajmathfoundation-dot/TPOT-images/main/dishes/...">
+                                    <div class="upload-status">
+                                        Paste any image URL. GitHub blob URLs are auto-converted to raw.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Hidden authoritative value written to Firestore -->
+                        <input type="hidden" id="editImage">
+                    </div>
+
                     <div>
                         <label>Name *</label>
                         <input type="text" id="editName" required>
@@ -132,13 +225,9 @@
                             <option value="snacks">Snacks</option>
                             <option value="main">Main Courses</option>
                             <option value="soups">Soups</option>
-							<option value="Tea">Tea</option>
+                            <option value="Tea">Tea</option>
                             <option value="drinks">Drinks</option>
                         </select>
-                    </div>
-                    <div>
-                        <label>Image URL *</label>
-                        <input type="text" id="editImage" required>
                     </div>
                     <div>
                         <label>Serving Size</label>
@@ -227,44 +316,192 @@
         const tableBody = document.getElementById('tableBody');
         const editModal = document.getElementById('editModal');
         const editForm = document.getElementById('editForm');
-        
-        // Helper: Get selected days from checkboxes
+
+        // ============== IMAGE URL HELPERS ==============
+        const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/bajmathfoundation-dot/TPOT-images/main/";
+        const PLACEHOLDER = GITHUB_RAW_BASE + 'dishes/placeholder.jpg';
+
+        function resolveImageUrl(v) {
+            if (!v || typeof v !== 'string') return PLACEHOLDER;
+            const s = v.trim();
+            if (!s) return PLACEHOLDER;
+            if (/^https?:\/\/raw\.githubusercontent\.com\//i.test(s)) return s;
+            const blob = s.match(/^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)$/i);
+            if (blob) {
+                const [, u, r, b, p] = blob;
+                return `https://raw.githubusercontent.com/${u}/${r}/${b}/${p}`;
+            }
+            if (/^https?:\/\//i.test(s)) return s;
+            const clean = s.replace(/^\/+/, '');
+            return clean.includes('/') ? GITHUB_RAW_BASE + clean : GITHUB_RAW_BASE + 'dishes/' + clean;
+        }
+
+        async function uploadToGitHub(file, suggestedName) {
+            if (file.size > 5 * 1024 * 1024) {
+                throw new Error('Image is larger than 5 MB. Please compress it first.');
+            }
+            const fd = new FormData();
+            fd.append('image', file);
+            fd.append('dishName', suggestedName || file.name.replace(/\.[^.]+$/, ''));
+
+            try {
+                const res = await fetch('/api/upload', { method: 'POST', body: fd });
+                const text = await res.text();
+                let data;
+                try { data = JSON.parse(text); } 
+                catch (e) { throw new Error(`Server returned ${res.status}: ${text.slice(0, 50)}...`); }
+
+                if (!res.ok || !data.ok) throw new Error(data.error || `Upload failed (${res.status})`);
+                return data.url;
+            } catch (err) {
+                console.error("Upload Error Details:", err);
+                throw new Error("Failed to reach /api/upload. Are you on the live Vercel URL?");
+            }
+        }
+
+        // ============== IMAGE UPLOAD PANEL (Same as Dashboard) ==============
+        const imagePreview     = document.getElementById('editImagePreview');
+        const editImageHidden  = document.getElementById('editImage');
+        const editImageUrl     = document.getElementById('editImageUrl');
+        const fileInput        = document.getElementById('editImageFile');
+        const fileDrop         = document.getElementById('editFileDrop');
+        const fileDropText     = document.getElementById('editFileDropText');
+        const uploadStatus     = document.getElementById('editUploadStatus');
+        const uploadProgress   = document.getElementById('editUploadProgress');
+        const progressBar      = uploadProgress.querySelector('div');
+        const uploadModeBox    = document.getElementById('editUploadMode');
+        const urlModeBox       = document.getElementById('editUrlMode');
+        const tabRow           = document.getElementById('editTabRow');
+
+        let currentImageMode = 'upload';
+
+        tabRow.querySelectorAll('.toggle').forEach(btn => {
+            btn.addEventListener('click', () => {
+                tabRow.querySelectorAll('.toggle').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentImageMode = btn.dataset.mode;
+                uploadModeBox.hidden = currentImageMode !== 'upload';
+                urlModeBox.hidden    = currentImageMode !== 'url';
+                if (currentImageMode === 'url') editImageUrl.value = editImageHidden.value || '';
+            });
+        });
+
+        function setPreview(url) {
+            if (url) {
+                imagePreview.style.backgroundImage = `url('${resolveImageUrl(url)}')`;
+                imagePreview.textContent = '';
+            } else {
+                imagePreview.style.backgroundImage = '';
+                imagePreview.textContent = 'No image';
+            }
+        }
+
+        editImageUrl.addEventListener('input', () => {
+            const v = editImageUrl.value.trim();
+            editImageHidden.value = v;
+            setPreview(v);
+        });
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files[0]) handleFileChosen(fileInput.files[0]);
+        });
+
+        ['dragenter','dragover'].forEach(ev => fileDrop.addEventListener(ev, e => {
+            e.preventDefault(); fileDrop.classList.add('dragover');
+        }));
+        ['dragleave','drop'].forEach(ev => fileDrop.addEventListener(ev, e => {
+            e.preventDefault(); fileDrop.classList.remove('dragover');
+        }));
+        fileDrop.addEventListener('drop', e => {
+            if (e.dataTransfer.files[0]) handleFileChosen(e.dataTransfer.files[0]);
+        });
+
+        async function handleFileChosen(file) {
+            if (!file.type.startsWith('image/')) {
+                setStatus('Please choose an image file.', 'error');
+                return;
+            }
+            setPreview(URL.createObjectURL(file));
+            fileDropText.textContent = file.name;
+            setStatus('Uploading to GitHub…');
+            uploadProgress.classList.add('active');
+            progressBar.style.width = '35%';
+
+            try {
+                const rawUrl = await uploadToGitHub(file, document.getElementById('editName').value || file.name);
+                progressBar.style.width = '100%';
+                editImageHidden.value = rawUrl;
+                editImageUrl.value    = rawUrl;
+                setPreview(rawUrl);
+                setStatus('Uploaded successfully.', 'ok');
+            } catch (err) {
+                setStatus(err.message || 'Upload failed.', 'error');
+                progressBar.style.width = '0';
+            } finally {
+                setTimeout(() => { uploadProgress.classList.remove('active'); progressBar.style.width = '0'; }, 800);
+            }
+        }
+
+        function setStatus(msg, kind) {
+            uploadStatus.textContent = msg;
+            uploadStatus.className = 'upload-status' + (kind ? ' ' + kind : '');
+        }
+
+        function resetUploader(imageUrl) {
+            editImageHidden.value = imageUrl || '';
+            editImageUrl.value = /^https?:\/\//i.test(imageUrl) ? imageUrl : '';
+            setPreview(imageUrl);
+            fileDropText.textContent = 'Click or drop an image here (max 5 MB)';
+            setStatus('');
+            
+            currentImageMode = 'upload';
+            tabRow.querySelectorAll('.toggle').forEach(b => {
+                b.classList.toggle('active', b.dataset.mode === 'upload');
+            });
+            uploadModeBox.hidden = false;
+            urlModeBox.hidden = true;
+            fileInput.value = '';
+        }
+
+        // ============== DAYS HELPERS ==============
         function getSelectedDays() {
             const checkboxes = document.querySelectorAll('#editDaysGroup input[type="checkbox"]:checked');
             const days = Array.from(checkboxes).map(cb => cb.value);
             return days.length > 0 ? days.join(', ') : 'Mon-Sun';
         }
         
-        // Helper: Set checkboxes from days string
         function setCheckboxesFromDays(daysString) {
             const checkboxes = document.querySelectorAll('#editDaysGroup input[type="checkbox"]');
             checkboxes.forEach(cb => cb.checked = false);
             if (!daysString || daysString === 'Mon-Sun') return;
             const daysArray = daysString.split(',').map(d => d.trim());
             checkboxes.forEach(cb => {
-                if (daysArray.includes(cb.value)) {
-                    cb.checked = true;
-                }
+                if (daysArray.includes(cb.value)) cb.checked = true;
             });
         }
         
-        // Load all menu items into table
+        // ============== LOAD MENU TABLE ==============
         async function loadMenuItems() {
-            tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Loading...</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Loading...</td></tr>';
             
             try {
                 const snapshot = await db.collection("menuItems").orderBy("name").get();
                 
                 if (snapshot.empty) {
-                    tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No menu items found. Click "Add New Item" to create one.</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No menu items found. Click "Add New Item" to create one.</td></tr>';
                     return;
                 }
                 
                 tableBody.innerHTML = '';
                 snapshot.forEach(doc => {
                     const item = doc.data();
+                    const thumb = resolveImageUrl(item.image);
                     const row = document.createElement('tr');
                     row.innerHTML = `
+                        <td>
+                            <div style="width:56px;height:42px;border-radius:6px;background:#F5EFE6 center/cover no-repeat;border:1px solid #D7CCC8;
+                                        background-image:url('${thumb}');"></div>
+                        </td>
                         <td>${item.name || ''}</td>
                         <td>${item.price || ''}</td>
                         <td>${item.category || ''}</td>
@@ -280,28 +517,21 @@
                 });
             } catch (error) {
                 console.error("Error loading items:", error);
-                tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red;">Error loading data. Check console.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">Error loading data. Check console.</td></tr>';
             }
         }
         
-        // Edit item - open modal with existing data
+        // ============== EDIT / OPEN MODAL ==============
         window.editItem = async function(docId) {
             try {
                 const doc = await db.collection("menuItems").doc(docId).get();
-                
-                if (!doc.exists) {
-                    alert("Item not found!");
-                    return;
-                }
-                
+                if (!doc.exists) { alert("Item not found!"); return; }
                 const item = doc.data();
                 
-                // Populate form fields
                 document.getElementById('editDocId').value = docId;
                 document.getElementById('editName').value = item.name || '';
                 document.getElementById('editPrice').value = item.price || '';
                 document.getElementById('editCategory').value = item.category || 'signature';
-                document.getElementById('editImage').value = item.image || '';
                 document.getElementById('editServing').value = item.serving || '';
                 document.getElementById('editPrepTime').value = item.prepTime || '15-20 mins';
                 document.getElementById('editSpiceLevel').value = item.spiceLevel || 'Medium';
@@ -311,10 +541,9 @@
                 document.getElementById('editDescription').value = item.description || '';
                 document.getElementById('editAvailable').checked = item.available || false;
                 
-                // Set days checkboxes
+                resetUploader(item.image || '');
                 setCheckboxesFromDays(item.daysAvailable || '');
                 
-                // Show modal
                 editModal.style.display = 'flex';
                 
             } catch (error) {
@@ -323,48 +552,42 @@
             }
         };
         
-        // Close modal
         window.closeModal = function() {
             editModal.style.display = 'none';
             editForm.reset();
+            resetUploader('');
         };
         
-        // Close modal when clicking outside
         window.onclick = function(event) {
-            if (event.target === editModal) {
-                closeModal();
-            }
+            if (event.target === editModal) closeModal();
         };
         
-        // Update item - THIS IS THE FIXED UPDATE FUNCTION
+        // ============== SUBMIT UPDATE ==============
         editForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const docId = document.getElementById('editDocId').value;
+            if (!docId) { alert("Error: No item selected for update."); return; }
             
-            if (!docId) {
-                alert("Error: No item selected for update.");
+            const imageValue = editImageHidden.value.trim();
+            if (!imageValue) {
+                alert('Please upload an image or paste an image URL.');
                 return;
             }
-            
-            // Get tags as array
+
             const tagsInput = document.getElementById('editTags').value;
             const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t) : [];
             
-            // Get selected days
-            const selectedDays = getSelectedDays();
-            
-            // Prepare updated data
             const updatedItem = {
                 name: document.getElementById('editName').value,
                 price: document.getElementById('editPrice').value,
                 category: document.getElementById('editCategory').value,
-                image: document.getElementById('editImage').value,
+                image: imageValue,
                 serving: document.getElementById('editServing').value || "1 person",
                 prepTime: document.getElementById('editPrepTime').value,
                 spiceLevel: document.getElementById('editSpiceLevel').value,
                 popularity: document.getElementById('editPopularity').value || "★★★★☆",
-                daysAvailable: selectedDays,
+                daysAvailable: getSelectedDays(),
                 orderTime: document.getElementById('editOrderTime').value || "8:00 AM - 10:00 PM",
                 tags: tags,
                 description: document.getElementById('editDescription').value,
@@ -372,7 +595,6 @@
                 lastUpdated: new Date().toISOString()
             };
             
-            // Show updating status
             const submitBtn = editForm.querySelector('button[type="submit"]');
             const originalText = submitBtn.textContent;
             submitBtn.textContent = 'UPDATING...';
@@ -382,7 +604,7 @@
                 await db.collection("menuItems").doc(docId).update(updatedItem);
                 alert("✅ Item updated successfully!");
                 closeModal();
-                loadMenuItems(); // Refresh the table
+                loadMenuItems();
             } catch (error) {
                 console.error("Update error:", error);
                 alert("❌ Error updating item: " + error.message);
@@ -392,7 +614,7 @@
             }
         });
         
-        // Delete item
+        // ============== DELETE ==============
         window.deleteItem = async function(docId) {
             if (confirm("⚠️ Delete this item permanently? This cannot be undone.")) {
                 try {
@@ -406,7 +628,7 @@
             }
         };
         
-        // Load data when page loads
+        // ============== BOOT ==============
         window.onload = function() {
             loadMenuItems();
         };
