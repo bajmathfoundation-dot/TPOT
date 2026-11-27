@@ -20,15 +20,15 @@
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid #D7CCC8; vertical-align: middle; }
         th { background: #F5EFE6; color: #8D6E63; }
         tr:hover { background: #FFF8F0; }
-        
-        .btn { 
+
+        .btn {
             padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;
         }
         .btn-edit { background: #A1887F; color: white; }
         .btn-delete { background: #D32F2F; color: white; }
         .btn-add { background: #8D6E63; color: white; padding: 12px 25px; font-size: 1.1rem; }
 
-        .modal { 
+        .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(93,64,55,0.9); align-items: center; justify-content: center; z-index: 2000;
         }
@@ -39,7 +39,7 @@
         .modal-close { float: right; font-size: 2rem; cursor: pointer; color: #8D6E63; }
 
         .success { color: #2E7D32; text-align: center; margin: 15px 0; font-weight: bold; }
-        
+
         .days-group {
             display: flex;
             flex-wrap: wrap;
@@ -57,7 +57,7 @@
             width: auto;
             margin: 0;
         }
-        
+
         .form-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -76,7 +76,7 @@
             margin-bottom: 5px;
         }
 
-        /* ===== IMAGE UPLOAD UI ===== */
+        /* ===== IMAGE UPLOAD UI (upload-only) ===== */
         .image-panel {
             grid-column: 1 / -1;
             border: 1px dashed #D7CCC8;
@@ -100,16 +100,6 @@
             color: #A1887F; font-size: .8rem; text-align: center; padding: 6px;
         }
         .image-controls { flex: 1; min-width: 220px; }
-        .image-controls .tab-row {
-            display: flex; gap: 8px; margin-bottom: 10px;
-        }
-        .tab-row .toggle {
-            padding: 6px 14px; border-radius: 20px; border: 1px solid #D7CCC8;
-            background: #fff; color: #8D6E63; font-size: .85rem; cursor: pointer; font-weight: 600;
-        }
-        .tab-row .toggle.active {
-            background: #A1887F; color: #fff; border-color: #A1887F;
-        }
         .file-drop {
             display: block; padding: 14px; border: 1px dashed #A1887F;
             border-radius: 8px; background: #fff; text-align: center;
@@ -171,42 +161,24 @@
             <h2>Edit Menu Item</h2>
             <form id="editForm">
                 <input type="hidden" id="editDocId">
-                
+
                 <div class="form-grid">
-                    
-                    <!-- ==== IMAGE PANEL ==== -->
+
+                    <!-- ==== IMAGE PANEL (upload only) ==== -->
                     <div class="image-panel">
                         <label>Dish Image *</label>
                         <div class="row">
                             <div class="image-preview" id="editImagePreview">No image</div>
                             <div class="image-controls">
-                                <div class="tab-row" id="editTabRow">
-                                    <button type="button" class="toggle active" data-mode="upload">Upload file</button>
-                                    <button type="button" class="toggle" data-mode="url">Use URL</button>
-                                </div>
-
-                                <!-- Upload mode -->
-                                <div id="editUploadMode">
-                                    <label class="file-drop" id="editFileDrop">
-                                        <input type="file" id="editImageFile" accept="image/*">
-                                        <i class="fas fa-cloud-arrow-up"></i>
-                                        <span id="editFileDropText">Click or drop an image here (max 5 MB)</span>
-                                    </label>
-                                    <div class="progress" id="editUploadProgress"><div></div></div>
-                                    <div class="upload-status" id="editUploadStatus"></div>
-                                </div>
-
-                                <!-- URL mode -->
-                                <div id="editUrlMode" hidden>
-                                    <input type="url" id="editImageUrl"
-                                           placeholder="https://raw.githubusercontent.com/bajmathfoundation-dot/TPOT-images/main/dishes/...">
-                                    <div class="upload-status">
-                                        Paste any image URL. GitHub blob URLs are auto-converted to raw.
-                                    </div>
-                                </div>
+                                <label class="file-drop" id="editFileDrop">
+                                    <input type="file" id="editImageFile" accept="image/*">
+                                    <i class="fas fa-cloud-arrow-up"></i>
+                                    <span id="editFileDropText">Click or drop an image here (max 5 MB)</span>
+                                </label>
+                                <div class="progress" id="editUploadProgress"><div></div></div>
+                                <div class="upload-status" id="editUploadStatus"></div>
                             </div>
                         </div>
-                        <!-- Hidden authoritative value written to Firestore -->
                         <input type="hidden" id="editImage">
                     </div>
 
@@ -265,7 +237,7 @@
                         <input type="text" id="editTags" placeholder="Spicy, Popular">
                     </div>
                 </div>
-                
+
                 <div>
                     <label>Days Available</label>
                     <div class="days-group" id="editDaysGroup">
@@ -278,18 +250,18 @@
                         <label><input type="checkbox" value="Sunday"> Sun</label>
                     </div>
                 </div>
-                
+
                 <div>
                     <label>Description *</label>
                     <textarea id="editDescription" rows="4" required></textarea>
                 </div>
-                
+
                 <div style="margin: 15px 0;">
                     <label>
                         <input type="checkbox" id="editAvailable"> Available Today
                     </label>
                 </div>
-                
+
                 <button type="submit" class="btn" style="background:#8D6E63; color:white; width:100%; padding:15px; font-size:1.1rem;">
                     UPDATE ITEM
                 </button>
@@ -309,10 +281,10 @@
             messagingSenderId: "272048176539",
             appId: "1:272048176539:web:d73d09a39171c8ef12753e"
         };
-        
+
         const app = firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        
+
         const tableBody = document.getElementById('tableBody');
         const editModal = document.getElementById('editModal');
         const editForm = document.getElementById('editForm');
@@ -336,55 +308,67 @@
             return clean.includes('/') ? GITHUB_RAW_BASE + clean : GITHUB_RAW_BASE + 'dishes/' + clean;
         }
 
+        // ============== UPLOAD (diagnostic + one retry) ==============
         async function uploadToGitHub(file, suggestedName) {
             if (file.size > 5 * 1024 * 1024) {
                 throw new Error('Image is larger than 5 MB. Please compress it first.');
             }
+
             const fd = new FormData();
             fd.append('image', file);
             fd.append('dishName', suggestedName || file.name.replace(/\.[^.]+$/, ''));
 
-            try {
-                const res = await fetch('/api/upload', { method: 'POST', body: fd });
+            async function attempt() {
+                let res;
+                try {
+                    res = await fetch('/api/upload', { method: 'POST', body: fd });
+                } catch (netErr) {
+                    const e = new Error(
+                        'Could not reach the upload server (/api/upload). ' +
+                        'This page must be served by your deployed backend (e.g. Vercel), ' +
+                        'not opened as a local file. (' + (netErr.message || netErr) + ')'
+                    );
+                    e.isNetwork = true;
+                    throw e;
+                }
+
                 const text = await res.text();
                 let data;
-                try { data = JSON.parse(text); } 
-                catch (e) { throw new Error(`Server returned ${res.status}: ${text.slice(0, 50)}...`); }
+                try {
+                    data = JSON.parse(text);
+                } catch {
+                    throw new Error(
+                        `Upload server returned HTTP ${res.status} but not JSON. ` +
+                        `Response started with: "${text.slice(0, 80)}…"`
+                    );
+                }
 
-                if (!res.ok || !data.ok) throw new Error(data.error || `Upload failed (${res.status})`);
+                if (!res.ok || !data.ok) {
+                    throw new Error(data.error || `Upload failed (HTTP ${res.status})`);
+                }
                 return data.url;
+            }
+
+            try {
+                return await attempt();
             } catch (err) {
-                console.error("Upload Error Details:", err);
-                throw new Error("Failed to reach /api/upload. Are you on the live Vercel URL?");
+                if (err.isNetwork) {
+                    await new Promise(r => setTimeout(r, 700));
+                    return await attempt();
+                }
+                throw err;
             }
         }
 
-        // ============== IMAGE UPLOAD PANEL (Same as Dashboard) ==============
+        // ============== IMAGE UPLOAD PANEL (upload-only) ==============
         const imagePreview     = document.getElementById('editImagePreview');
         const editImageHidden  = document.getElementById('editImage');
-        const editImageUrl     = document.getElementById('editImageUrl');
         const fileInput        = document.getElementById('editImageFile');
         const fileDrop         = document.getElementById('editFileDrop');
         const fileDropText     = document.getElementById('editFileDropText');
         const uploadStatus     = document.getElementById('editUploadStatus');
         const uploadProgress   = document.getElementById('editUploadProgress');
         const progressBar      = uploadProgress.querySelector('div');
-        const uploadModeBox    = document.getElementById('editUploadMode');
-        const urlModeBox       = document.getElementById('editUrlMode');
-        const tabRow           = document.getElementById('editTabRow');
-
-        let currentImageMode = 'upload';
-
-        tabRow.querySelectorAll('.toggle').forEach(btn => {
-            btn.addEventListener('click', () => {
-                tabRow.querySelectorAll('.toggle').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentImageMode = btn.dataset.mode;
-                uploadModeBox.hidden = currentImageMode !== 'upload';
-                urlModeBox.hidden    = currentImageMode !== 'url';
-                if (currentImageMode === 'url') editImageUrl.value = editImageHidden.value || '';
-            });
-        });
 
         function setPreview(url) {
             if (url) {
@@ -395,12 +379,6 @@
                 imagePreview.textContent = 'No image';
             }
         }
-
-        editImageUrl.addEventListener('input', () => {
-            const v = editImageUrl.value.trim();
-            editImageHidden.value = v;
-            setPreview(v);
-        });
 
         fileInput.addEventListener('change', () => {
             if (fileInput.files[0]) handleFileChosen(fileInput.files[0]);
@@ -423,7 +401,7 @@
             }
             setPreview(URL.createObjectURL(file));
             fileDropText.textContent = file.name;
-            setStatus('Uploading to GitHub…');
+            setStatus('Uploading…');
             uploadProgress.classList.add('active');
             progressBar.style.width = '35%';
 
@@ -431,12 +409,13 @@
                 const rawUrl = await uploadToGitHub(file, document.getElementById('editName').value || file.name);
                 progressBar.style.width = '100%';
                 editImageHidden.value = rawUrl;
-                editImageUrl.value    = rawUrl;
                 setPreview(rawUrl);
                 setStatus('Uploaded successfully.', 'ok');
+                fileDropText.textContent = 'Image uploaded — click or drop to replace';
             } catch (err) {
-                setStatus(err.message || 'Upload failed.', 'error');
                 progressBar.style.width = '0';
+                setStatus(err.message || 'Upload failed.', 'error');
+                fileInput.value = '';
             } finally {
                 setTimeout(() => { uploadProgress.classList.remove('active'); progressBar.style.width = '0'; }, 800);
             }
@@ -449,17 +428,11 @@
 
         function resetUploader(imageUrl) {
             editImageHidden.value = imageUrl || '';
-            editImageUrl.value = /^https?:\/\//i.test(imageUrl) ? imageUrl : '';
-            setPreview(imageUrl);
-            fileDropText.textContent = 'Click or drop an image here (max 5 MB)';
+            setPreview(imageUrl || '');
+            fileDropText.textContent = imageUrl
+                ? 'Image loaded — click or drop to replace'
+                : 'Click or drop an image here (max 5 MB)';
             setStatus('');
-            
-            currentImageMode = 'upload';
-            tabRow.querySelectorAll('.toggle').forEach(b => {
-                b.classList.toggle('active', b.dataset.mode === 'upload');
-            });
-            uploadModeBox.hidden = false;
-            urlModeBox.hidden = true;
             fileInput.value = '';
         }
 
@@ -469,7 +442,7 @@
             const days = Array.from(checkboxes).map(cb => cb.value);
             return days.length > 0 ? days.join(', ') : 'Mon-Sun';
         }
-        
+
         function setCheckboxesFromDays(daysString) {
             const checkboxes = document.querySelectorAll('#editDaysGroup input[type="checkbox"]');
             checkboxes.forEach(cb => cb.checked = false);
@@ -479,19 +452,19 @@
                 if (daysArray.includes(cb.value)) cb.checked = true;
             });
         }
-        
+
         // ============== LOAD MENU TABLE ==============
         async function loadMenuItems() {
             tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Loading...</td></tr>';
-            
+
             try {
                 const snapshot = await db.collection("menuItems").orderBy("name").get();
-                
+
                 if (snapshot.empty) {
                     tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No menu items found. Click "Add New Item" to create one.</td></tr>';
                     return;
                 }
-                
+
                 tableBody.innerHTML = '';
                 snapshot.forEach(doc => {
                     const item = doc.data();
@@ -520,14 +493,14 @@
                 tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">Error loading data. Check console.</td></tr>';
             }
         }
-        
+
         // ============== EDIT / OPEN MODAL ==============
         window.editItem = async function(docId) {
             try {
                 const doc = await db.collection("menuItems").doc(docId).get();
                 if (!doc.exists) { alert("Item not found!"); return; }
                 const item = doc.data();
-                
+
                 document.getElementById('editDocId').value = docId;
                 document.getElementById('editName').value = item.name || '';
                 document.getElementById('editPrice').value = item.price || '';
@@ -540,44 +513,44 @@
                 document.getElementById('editTags').value = (item.tags || []).join(', ');
                 document.getElementById('editDescription').value = item.description || '';
                 document.getElementById('editAvailable').checked = item.available || false;
-                
+
                 resetUploader(item.image || '');
                 setCheckboxesFromDays(item.daysAvailable || '');
-                
+
                 editModal.style.display = 'flex';
-                
+
             } catch (error) {
                 console.error("Error loading item:", error);
                 alert("Error loading item details. Please try again.");
             }
         };
-        
+
         window.closeModal = function() {
             editModal.style.display = 'none';
             editForm.reset();
             resetUploader('');
         };
-        
+
         window.onclick = function(event) {
             if (event.target === editModal) closeModal();
         };
-        
+
         // ============== SUBMIT UPDATE ==============
         editForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const docId = document.getElementById('editDocId').value;
             if (!docId) { alert("Error: No item selected for update."); return; }
-            
+
             const imageValue = editImageHidden.value.trim();
             if (!imageValue) {
-                alert('Please upload an image or paste an image URL.');
+                alert('Please upload an image.');
                 return;
             }
 
             const tagsInput = document.getElementById('editTags').value;
             const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t) : [];
-            
+
             const updatedItem = {
                 name: document.getElementById('editName').value,
                 price: document.getElementById('editPrice').value,
@@ -594,12 +567,12 @@
                 available: document.getElementById('editAvailable').checked,
                 lastUpdated: new Date().toISOString()
             };
-            
+
             const submitBtn = editForm.querySelector('button[type="submit"]');
             const originalText = submitBtn.textContent;
             submitBtn.textContent = 'UPDATING...';
             submitBtn.disabled = true;
-            
+
             try {
                 await db.collection("menuItems").doc(docId).update(updatedItem);
                 alert("✅ Item updated successfully!");
@@ -613,7 +586,7 @@
                 submitBtn.disabled = false;
             }
         });
-        
+
         // ============== DELETE ==============
         window.deleteItem = async function(docId) {
             if (confirm("⚠️ Delete this item permanently? This cannot be undone.")) {
@@ -627,7 +600,7 @@
                 }
             }
         };
-        
+
         // ============== BOOT ==============
         window.onload = function() {
             loadMenuItems();

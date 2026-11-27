@@ -12,7 +12,7 @@
         header { background: #8D6E63; color: white; padding: 15px 0; text-align: center; }
         .logo-main { font-size: 2.8rem; font-weight: 900; }
         .logo-main .big-t { color: #FFD700; font-size: 3.5rem; }
-        
+
         .admin-card {
             background: white;
             padding: 40px;
@@ -47,7 +47,7 @@
         .btn:hover { background: #5D4037; }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .success { color: #2E7D32; text-align: center; margin-top: 15px; font-weight: bold; }
-        
+
         /* Days checkboxes group */
         .days-group {
             display: flex;
@@ -67,7 +67,7 @@
             margin: 0;
         }
 
-        /* ===== IMAGE UPLOAD UI ===== */
+        /* ===== IMAGE UPLOAD UI (upload-only) ===== */
         .image-panel {
             grid-column: 1 / -1;
             border: 1px dashed #D7CCC8;
@@ -91,16 +91,6 @@
             color: #A1887F; font-size: .8rem; text-align: center; padding: 6px;
         }
         .image-controls { flex: 1; min-width: 220px; }
-        .image-controls .tab-row {
-            display: flex; gap: 8px; margin-bottom: 10px;
-        }
-        .tab-row .toggle {
-            padding: 6px 14px; border-radius: 20px; border: 1px solid #D7CCC8;
-            background: #fff; color: #8D6E63; font-size: .85rem; cursor: pointer; font-weight: 600;
-        }
-        .tab-row .toggle.active {
-            background: #A1887F; color: #fff; border-color: #A1887F;
-        }
         .file-drop {
             display: block; padding: 14px; border: 1px dashed #A1887F;
             border-radius: 8px; background: #fff; text-align: center;
@@ -135,34 +125,20 @@
             <h2>Add New Menu Item</h2>
             <form id="menuForm">
                 <div class="form-grid">
-                    
-                    <!-- ==== IMAGE PANEL ==== -->
+
+                    <!-- ==== IMAGE PANEL (upload only) ==== -->
                     <div class="image-panel">
                         <label>Dish Image *</label>
                         <div class="row">
                             <div class="image-preview" id="regImagePreview">No image</div>
                             <div class="image-controls">
-                                <div class="tab-row" id="regTabRow">
-                                    <button type="button" class="toggle active" data-mode="upload">Upload file</button>
-                                    <button type="button" class="toggle" data-mode="url">Use URL</button>
-                                </div>
-
-                                <!-- Upload mode -->
-                                <div id="regUploadMode">
-                                    <label class="file-drop" id="regFileDrop">
-                                        <input type="file" id="regImageFile" accept="image/*">
-                                        <i class="fas fa-cloud-arrow-up"></i>
-                                        <span id="regFileDropText">Click or drop an image here (max 5 MB)</span>
-                                    </label>
-                                    <div class="progress" id="regUploadProgress"><div></div></div>
-                                    <div class="upload-status" id="regUploadStatus"></div>
-                                </div>
-
-                                <!-- URL mode -->
-                                <div id="regUrlMode" hidden>
-                                    <input type="url" id="regImageUrl" placeholder="https://raw.githubusercontent.com/bajmathfoundation-dot/TPOT-images/main/dishes/...">
-                                    <div class="upload-status">Paste any image URL. GitHub blob URLs are auto-converted to raw.</div>
-                                </div>
+                                <label class="file-drop" id="regFileDrop">
+                                    <input type="file" id="regImageFile" accept="image/*">
+                                    <i class="fas fa-cloud-arrow-up"></i>
+                                    <span id="regFileDropText">Click or drop an image here (max 5 MB)</span>
+                                </label>
+                                <div class="progress" id="regUploadProgress"><div></div></div>
+                                <div class="upload-status" id="regUploadStatus"></div>
                             </div>
                         </div>
                         <input type="hidden" id="image">
@@ -181,7 +157,7 @@
                         </select>
                     </div>
                     <div><label>Serving Size</label><input type="text" id="serving" placeholder="1-2 persons"></div>
-                    
+
                     <div><label>Prep Time</label>
                         <select id="prepTime">
                             <option value="10-15 mins">10-15 mins</option>
@@ -191,7 +167,7 @@
                             <option value="45-60 mins">45-60 mins</option>
                         </select>
                     </div>
-                    
+
                     <div><label>Spice Level</label>
                         <select id="spiceLevel">
                             <option value="None">None</option>
@@ -201,7 +177,7 @@
                         </select>
                     </div>
                     <div><label>Popularity</label><input type="text" id="popularity" value="★★★★☆"></div>
-                    
+
                     <div><label>Days Available</label>
                         <div class="days-group" id="daysGroup">
                             <label><input type="checkbox" value="Monday"> Mon</label>
@@ -213,16 +189,16 @@
                             <label><input type="checkbox" value="Sunday"> Sun</label>
                         </div>
                     </div>
-                    
+
                     <div><label>Order Time</label><input type="text" id="orderTime" placeholder="e.g., 8:00 AM - 10:00 PM"></div>
                     <div><label>Tags (comma separated)</label><input type="text" id="tags" placeholder="Spicy,Popular,Best Seller"></div>
                 </div>
-                
+
                 <div style="margin-top:20px;">
                     <label>Description *</label>
                     <textarea id="description" rows="4" style="width:100%;" required></textarea>
                 </div>
-                
+
                 <div style="margin-top:15px;">
                     <label><input type="checkbox" id="available" checked> Available Today</label>
                 </div>
@@ -253,7 +229,7 @@
         const status = document.getElementById('status');
         const submitBtn = document.getElementById('submitBtn');
 
-        // ============== IMAGE HELPERS ==============
+        // ============== IMAGE URL HELPERS ==============
         const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/bajmathfoundation-dot/TPOT-images/main/";
         const PLACEHOLDER = GITHUB_RAW_BASE + 'dishes/placeholder.jpg';
 
@@ -272,55 +248,68 @@
             return clean.includes('/') ? GITHUB_RAW_BASE + clean : GITHUB_RAW_BASE + 'dishes/' + clean;
         }
 
+        // ============== UPLOAD (diagnostic + one retry) ==============
         async function uploadToGitHub(file, suggestedName) {
             if (file.size > 5 * 1024 * 1024) {
                 throw new Error('Image is larger than 5 MB. Please compress it first.');
             }
+
             const fd = new FormData();
             fd.append('image', file);
             fd.append('dishName', suggestedName || file.name.replace(/\.[^.]+$/, ''));
 
-            try {
-                const res = await fetch('/api/upload', { method: 'POST', body: fd });
+            async function attempt() {
+                let res;
+                try {
+                    res = await fetch('/api/upload', { method: 'POST', body: fd });
+                } catch (netErr) {
+                    const e = new Error(
+                        'Could not reach the upload server (/api/upload). ' +
+                        'This page must be served by your deployed backend (e.g. Vercel), ' +
+                        'not opened as a local file. (' + (netErr.message || netErr) + ')'
+                    );
+                    e.isNetwork = true;
+                    throw e;
+                }
+
                 const text = await res.text();
                 let data;
-                try { data = JSON.parse(text); } 
-                catch (e) { throw new Error(`Server returned ${res.status}: ${text.slice(0, 50)}...`); }
+                try {
+                    data = JSON.parse(text);
+                } catch {
+                    throw new Error(
+                        `Upload server returned HTTP ${res.status} but not JSON. ` +
+                        `Response started with: "${text.slice(0, 80)}…"`
+                    );
+                }
 
-                if (!res.ok || !data.ok) throw new Error(data.error || `Upload failed (${res.status})`);
+                if (!res.ok || !data.ok) {
+                    throw new Error(data.error || `Upload failed (HTTP ${res.status})`);
+                }
                 return data.url;
+            }
+
+            try {
+                return await attempt();
             } catch (err) {
-                console.error("Upload Error Details:", err);
-                throw new Error("Failed to reach /api/upload. Are you on the live Vercel URL?");
+                if (err.isNetwork) {
+                    // single retry for transient network blips
+                    await new Promise(r => setTimeout(r, 700));
+                    return await attempt();
+                }
+                throw err;
             }
         }
 
-        // ============== IMAGE UPLOAD PANEL ==============
+        // ============== IMAGE UPLOAD PANEL (upload-only) ==============
         const imagePreview     = document.getElementById('regImagePreview');
         const imageHidden      = document.getElementById('image');
-        const imageUrl         = document.getElementById('regImageUrl');
         const fileInput        = document.getElementById('regImageFile');
         const fileDrop         = document.getElementById('regFileDrop');
         const fileDropText     = document.getElementById('regFileDropText');
         const uploadStatus     = document.getElementById('regUploadStatus');
         const uploadProgress   = document.getElementById('regUploadProgress');
         const progressBar      = uploadProgress.querySelector('div');
-        const uploadModeBox    = document.getElementById('regUploadMode');
-        const urlModeBox       = document.getElementById('regUrlMode');
-        const tabRow           = document.getElementById('regTabRow');
-
-        let currentImageMode = 'upload';
-
-        tabRow.querySelectorAll('.toggle').forEach(btn => {
-            btn.addEventListener('click', () => {
-                tabRow.querySelectorAll('.toggle').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentImageMode = btn.dataset.mode;
-                uploadModeBox.hidden = currentImageMode !== 'upload';
-                urlModeBox.hidden    = currentImageMode !== 'url';
-                if (currentImageMode === 'url') imageUrl.value = imageHidden.value || '';
-            });
-        });
 
         function setPreview(url) {
             if (url) {
@@ -331,12 +320,6 @@
                 imagePreview.textContent = 'No image';
             }
         }
-
-        imageUrl.addEventListener('input', () => {
-            const v = imageUrl.value.trim();
-            imageHidden.value = v;
-            setPreview(v);
-        });
 
         fileInput.addEventListener('change', () => {
             if (fileInput.files[0]) handleFileChosen(fileInput.files[0]);
@@ -359,7 +342,7 @@
             }
             setPreview(URL.createObjectURL(file));
             fileDropText.textContent = file.name;
-            setStatus('Uploading to GitHub…');
+            setStatus('Uploading…');
             uploadProgress.classList.add('active');
             progressBar.style.width = '35%';
 
@@ -367,12 +350,13 @@
                 const rawUrl = await uploadToGitHub(file, document.getElementById('name').value || file.name);
                 progressBar.style.width = '100%';
                 imageHidden.value = rawUrl;
-                imageUrl.value    = rawUrl;
                 setPreview(rawUrl);
                 setStatus('Uploaded successfully.', 'ok');
+                fileDropText.textContent = 'Image uploaded — click or drop to replace';
             } catch (err) {
-                setStatus(err.message || 'Upload failed.', 'error');
                 progressBar.style.width = '0';
+                setStatus(err.message || 'Upload failed.', 'error');
+                fileInput.value = '';
             } finally {
                 setTimeout(() => { uploadProgress.classList.remove('active'); progressBar.style.width = '0'; }, 800);
             }
@@ -385,17 +369,9 @@
 
         function resetUploader() {
             imageHidden.value = '';
-            imageUrl.value = '';
             setPreview('');
             fileDropText.textContent = 'Click or drop an image here (max 5 MB)';
             setStatus('');
-            
-            currentImageMode = 'upload';
-            tabRow.querySelectorAll('.toggle').forEach(b => {
-                b.classList.toggle('active', b.dataset.mode === 'upload');
-            });
-            uploadModeBox.hidden = false;
-            urlModeBox.hidden = true;
             fileInput.value = '';
         }
 
@@ -412,7 +388,7 @@
 
             const imageValue = imageHidden.value.trim();
             if (!imageValue) {
-                setStatus('Please upload an image or paste an image URL.', 'error');
+                setStatus('Please upload an image.', 'error');
                 return;
             }
 
@@ -459,8 +435,7 @@
         document.getElementById('seedBtn').addEventListener('click', async () => {
             if (!confirm('This will add sample menu items. Continue?')) return;
             status.textContent = 'Seeding database...';
-            
-            // Updated with GitHub image paths
+
             const sampleItems = [
                 { name: "Signature Kibabs", price: "₦2,500", category: "signature", description: "Tender beef skewers with special spices", image: "dishes/meat-kibab.jpg", tags: ["Popular","Spicy"], serving: "1 person", prepTime: "15-20 mins", popularity: "★★★★★", spiceLevel: "Medium", daysAvailable: "Mon, Tue, Wed, Thu, Fri, Sat", orderTime: "4:00 PM - 10:00 PM", available: true, date: "2026-01-01" },
                 { name: "Pounded Yam", price: "₦3,000", category: "main", description: "Served with egusi or vegetable soup", image: "dishes/pounded-yam.jpg", tags: ["Best Seller","Traditional"], serving: "2 persons", prepTime: "20-30 mins", popularity: "★★★★★", spiceLevel: "Mild", daysAvailable: "Mon-Sun", orderTime: "11:00 AM - 9:00 PM", available: true, date: "2026-01-01" },
@@ -470,7 +445,7 @@
                 { name: "Special Rice", price: "₦2,800", category: "main", description: "Spiced rice with grilled chicken", image: "dishes/special-rice.jpg", tags: ["Popular"], serving: "1-2 persons", prepTime: "20-30 mins", popularity: "★★★★★", spiceLevel: "Medium", daysAvailable: "Mon-Sun", orderTime: "11:00 AM - 9:00 PM", available: true, date: "2026-01-01" },
                 { name: "Masa & Cowleg", price: "₦2,500", category: "signature", description: "Rice cakes with rich cow leg soup", image: "dishes/masa-cowleg.jpg", tags: ["Traditional","Best Seller"], serving: "2 persons", prepTime: "25-35 mins", popularity: "★★★★★", spiceLevel: "Medium", daysAvailable: "Fri, Sat, Sun", orderTime: "5:00 PM - 10:00 PM", available: true, date: "2026-01-01" }
             ];
-            
+
             try {
                 for (let item of sampleItems) {
                     await db.collection("menuItems").add(item);
